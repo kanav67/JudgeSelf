@@ -1,0 +1,1 @@
+{"id":"e4f5e78a1ebe6251fcb0b454a68a5baf","index":7,"scriptPattern":"gen-random-unblocked --t\u003d1","inputFile":"stdin","outputFile":"stdout","memoryLimit":1024,"timeLimit":15000,"totalTimeLimit":120000,"solutionNames":["solution.cpp","bruteforce.cpp"],"description":"","solutionNamesUid":"","ignoreValidators":true}

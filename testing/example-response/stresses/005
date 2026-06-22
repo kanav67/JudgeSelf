@@ -1,0 +1,1 @@
+{"id":"dcc8d0a6378683273d1377b1dc6c5cb5","index":5,"scriptPattern":"gen-v1 --max_n\u003d2000 --max_m\u003d100","inputFile":"stdin","outputFile":"stdout","memoryLimit":1024,"timeLimit":3000,"totalTimeLimit":120000,"solutionNames":["solution.cpp"],"description":"","solutionNamesUid":"","ignoreValidators":false}

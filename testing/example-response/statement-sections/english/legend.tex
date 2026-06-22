@@ -1,0 +1,19 @@
+Vishwas was planning a surprise for his 6-month relationship anniversary --- a romantic treasure hunt across their college campus. Each stop had sentimental value: the bench where they first talked, the library where they exchanged notes, and their favorite corner in the canteen.
+
+Just days before the big event, the campus was struck by sudden renovations. Many key locations were unexpectedly blocked off, and Vishwas was on the verge of giving up.
+
+That's when Kanav, his best friend and problem-solving genius, stepped in to help. He modeled the entire campus as a weighted undirected graph, where:
+
+ Each node represents a location.
+\begin{itemize}
+\item Each edge represents a direct path between locations with a positive travel time (weight).
+\item Each location can either be open (.) or blocked (x) due to construction.
+\end{itemize}
+
+Kanav implemented a system that supports two types of dynamic operations:
+\begin{itemize}
+\item 0 - Path Query: Given two nodes, determine the shortest path between them using only currently unblocked locations.
+\item 1 - Toggle Operation: Toggle the status of a location between blocked and unblocked.
+\end{itemize}
+
+Your task is to help Kanav power Vishwas's plan by implementing this dynamic system.
