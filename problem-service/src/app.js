@@ -6,8 +6,6 @@ const { routes } = require('./routes');
 const { env } = require('./config/env');
 const { initializeTmpDir } = require('./services/problem-import.service');
 
-await initializeTmpDir();
-
 const app = express();
 
 app.use(express.json({ limit: '10mb' }));
@@ -16,8 +14,17 @@ app.use('/api', routes);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(env.port, () => {
-  console.log(`Problem service listening on port ${env.port}`);
-});
+const startServer = async () => {
+  await initializeTmpDir();
+
+  await require('./config/postgres').checkHealth();
+  await require('./config/s3').checkHealth();
+
+  app.listen(env.port, () => {
+    console.log(`Problem service listening on port ${env.port}`);
+  });
+};
+
+startServer();
   
 module.exports = { app };

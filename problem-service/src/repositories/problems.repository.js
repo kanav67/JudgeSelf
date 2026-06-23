@@ -13,6 +13,7 @@ const createProblemRecord = async (problemRecord) => {
       output_statement,
       examples,
       notes,
+      images_key,
 
       memory_limit,
       time_limit,
@@ -22,11 +23,12 @@ const createProblemRecord = async (problemRecord) => {
       output_type,
       author_name,
       
+      has_interactor,
+      interactor_language,
       checker_language,
-      checker_file_key,
-      testcases_zip_key,
-    )
-      VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      problem_zip_key
+      )
+      VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
     RETURNING *
   `;
 
@@ -41,6 +43,7 @@ const createProblemRecord = async (problemRecord) => {
     problemRecord.outputStatement,
     problemRecord.examples,
     problemRecord.notes,
+    problemRecord.imagesKey,
 
     problemRecord.memoryLimit,
     problemRecord.timeLimit,
@@ -50,9 +53,11 @@ const createProblemRecord = async (problemRecord) => {
     problemRecord.outputType,
     problemRecord.authorName,
     
+    problemRecord.hasInteractor,
+    problemRecord.interactorLanguage,
     problemRecord.checkerLanguage,
-    problemRecord.checkerFileKey,
-    problemRecord.testcasesZipKey,
+
+    problemRecord.problemZipKey,
   ];
 
   const { rows } = await pool.query(query, values);

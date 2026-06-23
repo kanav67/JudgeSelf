@@ -2,10 +2,15 @@ const fs = require('fs/promises');
 const path = require('node:path');
 
 const { exec } = require('child_process');
+const { promisify } = require('node:util');
 const execPromise = promisify(exec);
 const MAX_TESTS_GENERATION_TIME = 5 * 60 * 1000; //5min
 
+//todo run it in a sandbox
+//todo in future we can optimize and make it faster by only generating tests instead of running doall.sh
 const generateTestCases = async (workDir) => {
+  const startedAt = Date.now();
+  console.log(`Generating test cases in ${workDir}`);
   //ensure wine is installed
   try {
     await execPromise('wine --version');
@@ -17,7 +22,6 @@ const generateTestCases = async (workDir) => {
   const files = await fs.readdir(path.join(workDir, 'scripts'));
   await Promise.all(files.map(async (file) => {
     const fullPath = path.join(workDir, 'scripts', file);
-    const fileStat = await fs.stat(fullPath);
 
     if (file.endsWith('.sh')) {
       // 0o755 gives read/write/execute to owner, and read/execute to others
@@ -28,9 +32,12 @@ const generateTestCases = async (workDir) => {
   //generates testcases
   try {
     const testcasesGenOutput = await execPromise('bash doall.sh', { cwd: workDir, timeout: MAX_TESTS_GENERATION_TIME });
+    console.log(testcasesGenOutput);
   } catch (error) {
     throw new Error(`Testcase generation failed: ${error.message}, \nstderr: ${error.stderr}`);
   }
+
+  console.log(`Took ${Date.now() - startedAt}ms to generate test cases in ${workDir}`);
 };
 
 const validateTestCases = async (workDir, testSetName, testCount) => {
@@ -39,7 +46,7 @@ const validateTestCases = async (workDir, testSetName, testCount) => {
   const entries = await fs.readdir(testsDir, { withFileTypes: true });
 
   if (entries.length !== testCount * 2) {
-    return new Error(`Expected ${testCount * 2} test files, but found ${entries.length}.`);
+    throw new Error(`Expected ${testCount * 2} test files (Total ${testCount} tests), but found ${entries.length}.`);
   }
 
   for (const entry of entries) {
@@ -51,11 +58,13 @@ const validateTestCases = async (workDir, testSetName, testCount) => {
   }
 
   for (let i = 1; i <= testCount; i++) {
-    if (!entries.some(e => e.name === `${i}`)) {
-      throw new Error(`Missing input test file : ${i}`);
+    const fileName = String(i).padStart(String(testCount).length, '0');
+
+    if (!entries.some(e => e.name === fileName)) {
+      throw new Error(`Missing input test file : ${fileName}`);
     }
-    if (!entries.some(e => e.name === `${i}.a`)) {
-      throw new Error(`Missing output test file : ${i}.a`);
+    if (!entries.some(e => e.name === `${fileName}.a`)) {
+      throw new Error(`Missing output test file : ${fileName}.a`);
     }
   }
 };

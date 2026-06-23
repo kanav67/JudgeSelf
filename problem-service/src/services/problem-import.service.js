@@ -1,16 +1,17 @@
 const fs = require('fs/promises');
 const path = require('path');
 const axios = require('axios');
-const { uploadToS3 } = require('./s3.service');
-const { fetchProblemZip } = require('./polygon/polygon.service');
 const { env } = require('../config/env');
-const { extractProblemStatement } = require('./statement.service');
-const { createProblemRecord } = require('../repositories/problems.repository');
+
+const { fetchProblemZip } = require('./polygon/polygon.service');
 const { parseProblemXML } = require('./polygon/polygon-xml.service');
+const { extractProblemStatement } = require('./statement.service');
 const { validateTestCases } = require('./polygon/polygon-tests.service');
+const { zipProblemFiles } = require('./archive.service');
+const { uploadToS3 } = require('./s3.service');
+const { createProblemRecord } = require('../repositories/problems.repository');
 
 const TMP_BASE_DIR = env.POLYGON_TMPDIR || '/tmp/polygon/';
-const SUPPORTED_GCC_VERSIONS = ['14', '17', '20', '23'];
 
 const generateUUID = () => {
   return crypto.randomUUID();
@@ -29,21 +30,18 @@ const importProblem = async (problemUrl) => {
     const xmlFilePath = path.join(workDir, 'problem.xml');
     const xmlContent = await fs.readFile(xmlFilePath, 'utf-8');
     const parsedData = await parseProblemXML(xmlContent);
-    
     const statementsData = await extractProblemStatement(workDir);
 
     await validateTestCases(workDir, parsedData.testSetName, parsedData.testCount);
+    
+    //todo ensure only supported languages are used
 
-    const checkerFileKey = `problems/${problemId}/checker`;
-    const testcasesZipKey = `problems/${problemId}/tests.zip`;
-    const problemZipKey = `problems/${problemId}/problem.zip`;
+    await zipProblemFiles(workDir, parsedData);
 
-    await uploadToS3(checkerSourcePath, checkerFileKey);
-    await uploadToS3(testsZipPath, testcasesZipKey);
-
-    //todo create a single zip having checker tests and resources
+    const problemZipPath = path.join(workDir, 'problem.zip');
+    const problemZipKey = `problems/${problemId}.zip`;
     await uploadToS3(problemZipPath, problemZipKey);
-
+    
     for (const img of statementsData.images) {
       await uploadToS3(img.imgSrc, `${problemId}/images/${img.name}`);
     }
@@ -52,7 +50,7 @@ const importProblem = async (problemUrl) => {
     const res = await createProblemRecord({
       id: problemId,
       polygonId: parsedData.polygonUrl,
-      polygonVersion: problemData.problem.revision,
+      polygonVersion: parsedData.polygonRevision,
 
       name: parsedData.problemName,
       statement: statementsData.statement,
@@ -60,22 +58,25 @@ const importProblem = async (problemUrl) => {
       outputStatement: statementsData.outputStatement,
       examples: statementsData.examples,
       notes: statementsData.notes,
+      imagesKey: statementsData.images,
 
       memoryLimit: parsedData.memoryLimit,
       timeLimit: parsedData.timeLimit,
       testCount: parsedData.testCount,
 
-      inputType: statementsData.inputType,
-      outputType: statementsData.outputType,
+      inputType: parsedData.inputType,
+      outputType: parsedData.outputType,
       authorName: parsedData.authorName,
 
+      hasInteractor: parsedData.hasInteractor,
+      interactorLanguage: parsedData.interactorLanguage,
       checkerLanguage: parsedData.checkerLanguage,
-      testcasesZipKey: testcasesZipKey,
-      checkerFileKey: checkerFileKey,
+      problemZipKey: problemZipKey,
     });
     
     return res;
   } catch (error) {
+    console.error(`Failed to import problem from ${problemUrl}:\n`, error);
     throw error;
   } finally {
     await fs.rm(workDir, { recursive: true, force: true });

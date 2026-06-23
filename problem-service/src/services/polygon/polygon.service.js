@@ -15,7 +15,7 @@ const fetchProblemZip = async (problemUrl, workDir, type = 'linux') => {
     body: new URLSearchParams({
       login: env.polygonUsername,
       password: env.polygonPassword,
-      type: 'linux'
+      type: type
     }),
   });
 

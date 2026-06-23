@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS problems (
   output_statement TEXT NOT NULL,
   notes TEXT NOT NULL,
   examples TEXT NOT NULL,
+  images_key TEXT[] NOT NULL,
 
   memory_limit BIGINT NOT NULL,
   time_limit INT NOT NULL,
@@ -18,9 +19,10 @@ CREATE TABLE IF NOT EXISTS problems (
   output_type TEXT NOT NULL,
   author_name TEXT NOT NULL,
 
+  has_interactor BOOLEAN NOT NULL,
+  interactor_language TEXT,
   checker_language TEXT NOT NULL,
-  checker_file_key TEXT NOT NULL,
-  testcases_zip_key TEXT NOT NULL,
+  problem_zip_key TEXT NOT NULL,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

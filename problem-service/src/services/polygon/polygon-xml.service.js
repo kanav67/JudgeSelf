@@ -1,4 +1,5 @@
 const { XMLParser } = require('fast-xml-parser');
+const path = require('path');
 
 const parseProblemXML = async (xmlContent) => {
   const parser = new XMLParser({
@@ -23,6 +24,9 @@ const parseProblemXML = async (xmlContent) => {
   const testsInfo = extractTestsInfo(problemData);
   const checkerInfo = extractCheckerInfo(problemData);
 
+  const hasInteractor = problemData.problem.assets.interactor ? true : false;
+  const interactorInfo = extractInteractorInfo(problemData);
+
   // skipping author name as it is not actually shown on codeforces.
   // if needed, we can extract it from the problem-properties.json file.
   return {
@@ -30,12 +34,20 @@ const parseProblemXML = async (xmlContent) => {
     polygonRevision: problemData.problem.revision,
     problemName: problemName,
     testSetName: testsInfo.testSetName,
+
     timeLimit: testsInfo.timeLimit,
     memoryLimit: testsInfo.memoryLimit,
     testCount: testsInfo.testCount,
+
     checkerSourcePath: checkerInfo.path,
     checkerLanguage: checkerInfo.type,
-    hasTestlib: problemData.problem.assets.checker.type === 'testlib' ? true : false,
+
+    hasInteractor: hasInteractor,
+    interactorSourcePath: interactorInfo.sourcePath,
+    interactorLanguage: interactorInfo.language,
+
+    resources: resources,
+
     inputType: 'stdin',
     outputType: 'stdout',
     authorName: '',
@@ -59,7 +71,10 @@ function extractResources(problemData) {
   const skipFiles = ['files/problem.tex', 'files/statements.ftl', 'files/olyml.sty'];
   return (problemData.problem.files.resources?.file || [])
     .filter(file => !skipFiles.includes(file.path))
-    .map(file => file.path);
+    .map(file => ({
+      name: path.basename(file.path),
+      path: file.path,
+    }));
 }
 
 function extractTestsInfo(problemData) {
@@ -97,5 +112,26 @@ function extractCheckerInfo(problemData) {
   return {
     path: checker.source.path,
     type: checker.source.type,
+  }
+}
+
+function extractInteractorInfo(problemData) {
+  const interactor = problemData.problem.assets.interactor;
+  if (!interactor) {
+    return {
+      sourcePath: null,
+      language: null,
+    };
+  }
+  if (!interactor.source || !interactor.source.path) {
+    throw new Error('Interactor source not found in problem. Are you sure an interactor is provided?');
+  }
+  if (!interactor.source.type) {
+    throw new Error('Interactor language is not defined in problem.');
+  }
+
+  return {
+    sourcePath: interactor.source.path,
+    language: interactor.source.type,
   }
 }
