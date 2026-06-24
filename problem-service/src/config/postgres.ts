@@ -1,14 +1,12 @@
-const { Pool } = require('pg');
-const { env } = require('./env');
+import { Pool, PoolConfig } from 'pg';
+import { env } from './env.js';
 
-const postgresConfig = {
+export const pool = new Pool({
   connectionString: env.databaseUrl,
   max: env.pgPoolMax,
-};
+});
 
-const pool = new Pool(postgresConfig);
-
-const checkHealth = async () => {
+export const checkHealth = async () => {
   try {
     const client = await pool.connect();
     await client.query('SELECT 1');
@@ -17,10 +15,4 @@ const checkHealth = async () => {
   } catch (error) {
     throw error;
   }
-}
-
-module.exports = {
-  pool,
-  postgresConfig,
-  checkHealth,
 };

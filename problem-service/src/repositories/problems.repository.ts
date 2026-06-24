@@ -1,6 +1,36 @@
-const { pool } = require('../config/postgres');
+import { pool } from '../config/postgres.js';
 
-const createProblemRecord = async (problemRecord) => {
+type ProblemRecord = {
+  id: string;
+  polygonId: string;
+  polygonVersion: number;
+
+  name: string;
+  statement: string;
+  inputStatement: string;
+  outputStatement: string;
+  examples: string;
+  notes: string;
+  imagesKey: string[];
+  tags: string[];
+
+  memoryLimit: number;
+  timeLimit: number;
+  testCount: number;
+
+  inputType: string;
+  outputType: string;
+  authorName: string;
+  
+  hasInteractor: boolean;
+  interactorLanguage: string | null;
+  checkerLanguage: string | null;
+  
+  problemZipKey: string;
+};
+
+//todo switch to orm
+export const createProblemRecord = async (problemRecord: ProblemRecord) => {
   const query = `
     INSERT INTO problems (
       id,
@@ -14,6 +44,7 @@ const createProblemRecord = async (problemRecord) => {
       examples,
       notes,
       images_key,
+      tags,
 
       memory_limit,
       time_limit,
@@ -28,7 +59,7 @@ const createProblemRecord = async (problemRecord) => {
       checker_language,
       problem_zip_key
       )
-      VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+      VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
     RETURNING *
   `;
 
@@ -44,6 +75,7 @@ const createProblemRecord = async (problemRecord) => {
     problemRecord.examples,
     problemRecord.notes,
     problemRecord.imagesKey,
+    problemRecord.tags,
 
     problemRecord.memoryLimit,
     problemRecord.timeLimit,
@@ -64,18 +96,12 @@ const createProblemRecord = async (problemRecord) => {
   return rows[0];
 };
 
-const getProblemById = async (problemId) => {
+export const getProblemById = async (problemId: string) => {
   const { rows } = await pool.query('SELECT * FROM problems WHERE id = $1::uuid', [problemId]);
   return rows[0] ?? null;
 };
 
-const getProblemByName = async (name) => {
+export const getProblemByName = async (name: string) => {
   const { rows } = await pool.query('SELECT * FROM problems WHERE name = $1', [name]);
   return rows[0] ?? null;
-};
-
-module.exports = {
-  createProblemRecord,
-  getProblemById,
-  getProblemByName,
 };

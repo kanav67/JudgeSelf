@@ -1,23 +1,22 @@
-const fs = require('fs/promises');
-const path = require('path');
-const axios = require('axios');
-const { env } = require('../config/env');
+import fs from 'fs/promises';
+import path from 'path';
+import { env } from '../config/env.js';
 
-const { fetchProblemZip } = require('./polygon/polygon.service');
-const { parseProblemXML } = require('./polygon/polygon-xml.service');
-const { extractProblemStatement } = require('./statement.service');
-const { validateTestCases } = require('./polygon/polygon-tests.service');
-const { zipProblemFiles } = require('./archive.service');
-const { uploadToS3 } = require('./s3.service');
-const { createProblemRecord } = require('../repositories/problems.repository');
+import { fetchProblemZip } from './polygon/polygon.service.js';
+import { parseProblemXML } from './polygon/polygon-xml.service.js';
+import { extractProblemStatement } from './statement.service.js';
+import { validateTestCases } from './polygon/polygon-tests.service.js';
+import { zipProblemFiles } from './archive.service.js';
+import { uploadToS3 } from './s3.service.js';
+import { createProblemRecord } from '../repositories/problems.repository.js';
 
-const TMP_BASE_DIR = env.POLYGON_TMPDIR || '/tmp/polygon/';
+const TMP_BASE_DIR = env.polygonTmpDir || '/tmp/polygon/';
 
 const generateUUID = () => {
   return crypto.randomUUID();
-}
+};
 
-const importProblem = async (problemUrl) => {
+export const importProblem = async (problemUrl: string) => {
   const problemId = generateUUID();
 
   const workDir = path.join(TMP_BASE_DIR, problemId);
@@ -33,19 +32,19 @@ const importProblem = async (problemUrl) => {
     const statementsData = await extractProblemStatement(workDir);
 
     await validateTestCases(workDir, parsedData.testSetName, parsedData.testCount);
-    
     //todo ensure only supported languages are used
 
     await zipProblemFiles(workDir, parsedData);
 
     const problemZipPath = path.join(workDir, 'problem.zip');
     const problemZipKey = `problems/${problemId}.zip`;
+    console.log(`Uploading problem zip to S3: ${problemZipPath} -> ${problemZipKey}`);
     await uploadToS3(problemZipPath, problemZipKey);
     
     for (const img of statementsData.images) {
       await uploadToS3(img.imgSrc, `${problemId}/images/${img.name}`);
     }
-    statementsData.images = statementsData.images.map(img => `${problemId}/images/${img.name}`);
+    const imagesKeys = statementsData.images.map((img) => `${problemId}/images/${img.name}`);
 
     const res = await createProblemRecord({
       id: problemId,
@@ -58,7 +57,8 @@ const importProblem = async (problemUrl) => {
       outputStatement: statementsData.outputStatement,
       examples: statementsData.examples,
       notes: statementsData.notes,
-      imagesKey: statementsData.images,
+      imagesKey: imagesKeys,
+      tags: parsedData.tags,
 
       memoryLimit: parsedData.memoryLimit,
       timeLimit: parsedData.timeLimit,
@@ -76,18 +76,17 @@ const importProblem = async (problemUrl) => {
     
     return res;
   } catch (error) {
-    console.error(`Failed to import problem from ${problemUrl}:\n`, error);
+    console.error(`Failed to import problem from ${problemUrl}:\n`);
     throw error;
   } finally {
     await fs.rm(workDir, { recursive: true, force: true });
   }
-}
+};
 
-const initializeTmpDir = async () => {
+export const initializeTmpDir = async () => {
   try {
     await fs.mkdir(TMP_BASE_DIR, { recursive: true });
 
-    //cleanup any previous files
     const files = await fs.readdir(TMP_BASE_DIR);
     await Promise.all(files.map(async (file) => {
       const fullPath = path.join(TMP_BASE_DIR, file);
@@ -99,6 +98,4 @@ const initializeTmpDir = async () => {
     console.error(`Failed to create temporary directory ${TMP_BASE_DIR}:`, error);
     throw error;
   }
-}
-
-module.exports = { importProblem, initializeTmpDir };
+};

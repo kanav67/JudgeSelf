@@ -1,23 +1,18 @@
-const { XMLParser } = require('fast-xml-parser');
-const path = require('path');
+import { XMLParser } from 'fast-xml-parser';
+import path from 'path';
+import { forceArrayPaths, ParsedProblemXML, PolygonProblemData } from './polygon-xml.types.js';
 
-const parseProblemXML = async (xmlContent) => {
+export const parseProblemXML = async (xmlContent: string) => {
   const parser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '',
     isArray: (name, jpath, isObject, isArray) => {
       // forces them to always be parsed as an array
-      const forceArrayPaths = [
-        'problem.names.name',
-        'problem.statements.statement',
-        'problem.judging.testset',
-        'problem.files.resources.file',
-      ];
-      return forceArrayPaths.includes(jpath);
+      return forceArrayPaths.includes(jpath.toString());
     }
   });
 
-  const problemData = parser.parse(xmlContent);
+  const problemData : PolygonProblemData = parser.parse(xmlContent);
   
   const problemName = extractName(problemData);
   const resources = extractResources(problemData);
@@ -29,9 +24,10 @@ const parseProblemXML = async (xmlContent) => {
 
   // skipping author name as it is not actually shown on codeforces.
   // if needed, we can extract it from the problem-properties.json file.
-  return {
+
+  const result : ParsedProblemXML = {
     polygonUrl: problemData.problem.url,
-    polygonRevision: problemData.problem.revision,
+    polygonRevision: parseInt(problemData.problem.revision),
     problemName: problemName,
     testSetName: testsInfo.testSetName,
 
@@ -51,33 +47,33 @@ const parseProblemXML = async (xmlContent) => {
     inputType: 'stdin',
     outputType: 'stdout',
     authorName: '',
-  };
+
+    tags: problemData.problem.tags?.tag?.map(tag => tag.value) || [],
+  }
+
+  return result;
 };
 
-module.exports = { parseProblemXML };
-
-
-function extractName(problemData) {
+function extractName(problemData: PolygonProblemData) {
   const names = problemData.problem.names.name;
   if (names.length === 0) {
     throw new Error('No problem name found in the problem. Please ensure the problem has at least one name.');
   }
-  const problemName = names.find(name => name.language === 'english')?.value || names[0].value;
+  const problemName = names.find((name) => name.language === 'english')?.value || names[0].value;
   return problemName;
 }
 
-//resources contains additional files required at runtime
-function extractResources(problemData) {
+function extractResources(problemData: PolygonProblemData) {
   const skipFiles = ['files/problem.tex', 'files/statements.ftl', 'files/olyml.sty'];
   return (problemData.problem.files.resources?.file || [])
-    .filter(file => !skipFiles.includes(file.path))
-    .map(file => ({
+    .filter((file) => !skipFiles.includes(file.path))
+    .map((file) => ({
       name: path.basename(file.path),
       path: file.path,
     }));
 }
 
-function extractTestsInfo(problemData) {
+function extractTestsInfo(problemData: PolygonProblemData) {
   const testsets = problemData.problem.judging.testset;
   if (testsets.length > 1) {
     throw new Error('Multiple testsets are not supported yet. Please ensure the problem has only one testset.');
@@ -97,7 +93,7 @@ function extractTestsInfo(problemData) {
   }
 }
 
-function extractCheckerInfo(problemData) {
+function extractCheckerInfo(problemData: PolygonProblemData) {
   const checker = problemData.problem.assets.checker;
   if (!checker || !checker.source) {
     throw new Error('No checker was found. Please add atleast one checker.');
@@ -115,7 +111,7 @@ function extractCheckerInfo(problemData) {
   }
 }
 
-function extractInteractorInfo(problemData) {
+function extractInteractorInfo(problemData: PolygonProblemData) {
   const interactor = problemData.problem.assets.interactor;
   if (!interactor) {
     return {

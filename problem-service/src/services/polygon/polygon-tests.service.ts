@@ -1,16 +1,16 @@
-const fs = require('fs/promises');
-const path = require('node:path');
+import fs from 'fs/promises';
+import path from 'node:path';
 
-const { exec } = require('child_process');
-const { promisify } = require('node:util');
+import { exec } from 'child_process';
+import { promisify } from 'node:util';
 const execPromise = promisify(exec);
 const MAX_TESTS_GENERATION_TIME = 5 * 60 * 1000; //5min
 
 //todo run it in a sandbox
-//todo in future we can optimize and make it faster by only generating tests instead of running doall.sh
-const generateTestCases = async (workDir) => {
+export const generateTestCases = async (workDir: string) => {
   const startedAt = Date.now();
   console.log(`Generating test cases in ${workDir}`);
+
   //ensure wine is installed
   try {
     await execPromise('wine --version');
@@ -33,14 +33,14 @@ const generateTestCases = async (workDir) => {
   try {
     const testcasesGenOutput = await execPromise('bash doall.sh', { cwd: workDir, timeout: MAX_TESTS_GENERATION_TIME });
     console.log(testcasesGenOutput);
-  } catch (error) {
+  } catch (error: any) {
     throw new Error(`Testcase generation failed: ${error.message}, \nstderr: ${error.stderr}`);
   }
 
   console.log(`Took ${Date.now() - startedAt}ms to generate test cases in ${workDir}`);
 };
 
-const validateTestCases = async (workDir, testSetName, testCount) => {
+export const validateTestCases = async (workDir: string, testSetName: string, testCount: number) => {
   const testsDir = path.join(workDir, testSetName);
 
   const entries = await fs.readdir(testsDir, { withFileTypes: true });
@@ -68,8 +68,3 @@ const validateTestCases = async (workDir, testSetName, testCount) => {
     }
   }
 };
-
-module.exports = {
-  generateTestCases,
-  validateTestCases
-}

@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS problems (
   notes TEXT NOT NULL,
   examples TEXT NOT NULL,
   images_key TEXT[] NOT NULL,
+  tags TEXT[] NOT NULL,
 
   memory_limit BIGINT NOT NULL,
   time_limit INT NOT NULL,

@@ -1,13 +1,13 @@
-const dotenv = require('dotenv');
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-const toBoolean = (value, defaultValue = false) => {
+const toBoolean = (value: any, defaultValue = false) => {
   if (value === undefined || value === null || value === '') return defaultValue;
   return String(value).toLowerCase() === 'true';
 };
 
-const env = {
+export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: Number(process.env.PORT ?? 3000),
   databaseUrl: process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/problem_service',
@@ -25,5 +25,3 @@ const env = {
   polygonTmpDir: process.env.POLYGON_TMPDIR ?? '/tmp/polygon/',
   polygonAllowGenerateTests: toBoolean(process.env.POLYGON_ALLOW_GENERATE_TESTS, false),
 };
-
-module.exports = { env };
