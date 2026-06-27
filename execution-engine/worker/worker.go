@@ -1,7 +1,7 @@
 package worker
 
 import (
-	job "execution-engine/Job"
+	job "execution-engine/job"
 	"execution-engine/sandbox"
 	"fmt"
 	"os"
@@ -49,24 +49,26 @@ func NewWorker(boxID int, job *job.Job) (*Worker, error) {
 	return w, nil
 }
 
-func (w *Worker) ExecuteWorker() error {
-	userCodeSource := []byte(w.Job.SubmissionData.SourceCode)
-	userCodeLanguage := w.Job.SubmissionData.SourceLanguage
-
-	userCodeBin, _ := w.Sandbox.CompileCode(userCodeSource, userCodeLanguage, "", nil)
-
-	//todo handle err
-
+func (w *Worker) ExecuteWorker() []job.Result {
 	checkerLanguage := w.Job.ProblemData.CheckerLanguage
-	checkerSource, _ := os.ReadFile(w.Job.ProblemData.GetCheckerSourcePath())
+	checkerBin, compileResult := w.CompileCheckerCode()
+	if checkerBin == nil {
+		return []job.Result{compileResult}
+	}
 
-	checkerBin, _ := w.Sandbox.CompileCode(checkerSource, checkerLanguage, w.Job.ProblemData.GetResourcesFolder(), nil)
+	userCodeLanguage := w.Job.SubmissionData.SourceLanguage
+	userCodeBin, compileResult := w.CompileUserCode()
+	if userCodeBin == nil {
+		return []job.Result{compileResult}
+	}
 
-	config := sandbox.NewIsolateConfig(func(ic *sandbox.IsolateConfig) {
+	userCodeExecuteConfig := sandbox.NewIsolateConfig(func(ic *sandbox.IsolateConfig) {
 		ic.TimeLimit = float64(w.Job.ProblemData.TimeLimit) / 1000
 		ic.MemoryLimit = w.Job.ProblemData.MemoryLimit
 		ic.WallTimeLimit = ic.TimeLimit * 2
 	})
+
+	// results := make([]job.Result, 0, w.Job.ProblemData.TestCount)
 
 	for test := 1; test <= w.Job.ProblemData.TestCount; test++ {
 		testInputPath := w.Job.ProblemData.GetTestFilePath(test)
@@ -74,9 +76,9 @@ func (w *Worker) ExecuteWorker() error {
 		testOutputPath := w.GetOutputFilePath(test)
 
 		// userMeta :=
-		w.Sandbox.ExecuteCode(userCodeBin, userCodeLanguage, testInputPath, testOutputPath, nil, config)
+		w.Sandbox.ExecuteCode(userCodeBin, userCodeLanguage, testInputPath, testOutputPath, nil, userCodeExecuteConfig)
 		// checkerMeta :=
-		w.Sandbox.ExecuteCode(checkerBin, checkerLanguage, "", "", []string{testInputPath, testOutputPath, testAnswerPath}, config)
+		w.Sandbox.ExecuteCode(checkerBin, checkerLanguage, "", "", []string{testInputPath, testOutputPath, testAnswerPath}, userCodeExecuteConfig)
 	}
 
 	return nil
@@ -89,4 +91,12 @@ func (w *Worker) GetOutputDir() string {
 func (w *Worker) GetOutputFilePath(test int) string {
 	length := len(strconv.Itoa(w.Job.ProblemData.TestCount))
 	return filepath.Join(w.GetOutputDir(), fmt.Sprintf("%0*d.out", length, test))
+}
+
+func GetDefaultConfig() *sandbox.IsolateConfig {
+	return sandbox.NewIsolateConfig(func(ic *sandbox.IsolateConfig) {
+		ic.MemoryLimit = 2 * 1024 * 1024 // 2 GB
+		ic.TimeLimit = 5.0               // 5 seconds
+		ic.WallTimeLimit = 10.0          // 10 seconds
+	})
 }

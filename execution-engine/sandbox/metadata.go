@@ -7,6 +7,14 @@ import (
 	"strings"
 )
 
+type Result struct {
+	Message         string
+	Stdin           string
+	Stdout          string
+	Stderr          string
+	IsolateMetadata *IsolateMetadata
+}
+
 type IsolateMetadata struct {
 	Time     float64
 	WallTime float64
@@ -22,7 +30,7 @@ func (s *Sandbox) GetParsedMetadata() *IsolateMetadata {
 
 	file, err := os.Open(s.GetMetadataPath())
 	if err != nil {
-		return meta // Return empty struct if missing
+		return nil // Return empty struct if missing
 	}
 	defer file.Close()
 
@@ -30,8 +38,10 @@ func (s *Sandbox) GetParsedMetadata() *IsolateMetadata {
 
 	//todo
 	if scanner.Err() != nil {
-		return meta // Return empty struct if error reading
+		return nil // Return empty struct if error reading
 	}
+
+	cgMem := -1
 
 	for scanner.Scan() {
 		parts := strings.SplitN(scanner.Text(), ":", 2)
@@ -45,7 +55,9 @@ func (s *Sandbox) GetParsedMetadata() *IsolateMetadata {
 			meta.Time, _ = strconv.ParseFloat(val, 64)
 		case "time-wall":
 			meta.WallTime, _ = strconv.ParseFloat(val, 64)
-		case "cg-mem", "max-rss":
+		case "cg-mem":
+			cgMem, _ = strconv.Atoi(val)
+		case "max-rss":
 			meta.Memory, _ = strconv.Atoi(val)
 		case "exitcode":
 			meta.ExitCode, _ = strconv.Atoi(val)
@@ -57,6 +69,12 @@ func (s *Sandbox) GetParsedMetadata() *IsolateMetadata {
 			meta.Message = val
 		}
 	}
+
+	//for future
+	if cgMem != -1 {
+		meta.Memory = cgMem
+	}
+
 	return meta
 }
 
@@ -64,7 +82,7 @@ func (s *Sandbox) GetMetadataPath() string {
 	return MetadataFile
 }
 
-//todo
+// todo
 func GetUserVerdict(meta *IsolateMetadata) string {
 	switch meta.Status {
 	case "TO":

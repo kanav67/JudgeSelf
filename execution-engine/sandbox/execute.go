@@ -29,7 +29,8 @@ func (s *Sandbox) ExecuteCode(sourceBin []byte, language, stdinFilePath, stdoutF
 		"-E", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 		"--run", "--", executeCmd,
 	)
-
+	args = append(args, additionalArgs...)
+	
 	cmd := exec.Command("isolate", args...)
 
 	if stdinFilePath != "" {

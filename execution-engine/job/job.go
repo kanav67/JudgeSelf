@@ -8,10 +8,10 @@ import (
 )
 
 type SubmissionData struct {
-	SubmissionID string  `json:"submission_id"`
-	SourceCode   string `json:"source_code"`
-	SourceLanguage     string `json:"language"`
-	ProblemID    string `json:"problem_id"`
+	SubmissionID   string `json:"submission_id"`
+	SourceCode     string `json:"source_code"`
+	SourceLanguage string `json:"language"`
+	ProblemID      string `json:"problem_id"`
 }
 
 type ProblemData struct {
@@ -24,11 +24,22 @@ type ProblemData struct {
 }
 
 type Verdict struct {
-	SubmissionID string `json:"submission_id"`
-	Status       string `json:"status"`
-	TimeMillis   int64  `json:"time_millis"`
-	MemoryBytes  int64  `json:"memory_bytes"`
-	Message      string `json:"message,omitempty"`
+	SubmissionID string   `json:"submission_id"`
+	Status       string   `json:"status"`
+	Time         int64    `json:"time_millis"`
+	Memory       int64    `json:"memory_bytes"`
+	Results      []Result `json:"results"`
+}
+
+type Result struct {
+	Test          int     `json:"test"`
+	Time          float64 `json:"time"`
+	Memory        int     `json:"memory"`
+	Status        string  `json:"status"` //AC, CE, WA, TLE, RE, INT
+	Message       string  `json:"message"`
+	InputSnippet  string  `json:"input_snippet"`
+	OutputSnippet string  `json:"output_snippet"`
+	AnswerSnippet string  `json:"answer_snippet"`
 }
 
 type Job struct {

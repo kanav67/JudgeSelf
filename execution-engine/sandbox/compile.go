@@ -5,51 +5,77 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 const CompileTimeLimit = 5.0
 const CompileMemoryLimit = 256 * 1024 // 256 MB
 
-
-func (s *Sandbox) CompileCode(sourceCode []byte, language, additionalFilesDir string, additionalArgs []string) ([]byte, error) {
+func (s *Sandbox) CompileCode(sourceCode []byte, language, additionalFilesDir string, additionalArgs []string, config *IsolateConfig) ([]byte, *Result) {
 	s.ReInitialize()
 
-	sourcePath := filepath.Join(s.BoxDir, "source")
-	_ = os.WriteFile(sourcePath, sourceCode, 0644)
-
-	compileCmd, exists := GetCompileCommand(language, "source", "outputBin");
+	compileCmd, exists := GetCompileCommand(language, "source", "outputBin")
 	if !exists {
-		return nil, fmt.Errorf("Unsupported checker language: %s", language)
+		return nil, &Result{
+			Message: fmt.Sprintf("Unsupported language: %s", language),
+		}
+	}
+
+	if compileCmd == "" {
+		return sourceCode, &Result{}
+	}
+
+	sourcePath := filepath.Join(s.BoxDir, "source")
+	err := os.WriteFile(sourcePath, sourceCode, 0644)
+	if err != nil {
+		return nil, &Result{
+			Message: fmt.Sprintf("Failed to write source code to file: %v", err),
+		}
 	}
 
 	if additionalFilesDir != "" {
 		CopyDirFiles(additionalFilesDir, s.BoxDir)
 	}
 
-	compileConfig:= NewIsolateConfig()
-
 	args := s.baseIsolateArgs()
-	args = append(args, compileConfig.toArgs()...)
+	args = append(args, config.toArgs()...)
 	args = append(args,
 		"-M", s.GetMetadataPath(),
 		"-E", "HOME=/tmp",
 		"-E", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 		"-d", "/etc:noexec",
-		"--run", "--", compileCmd, strings.Join(additionalArgs, " "),
+		"--run", "--", compileCmd,
 	)
+	args = append(args, additionalArgs...)
 
 	cmd := exec.Command("isolate", args...)
 	output, err := cmd.CombinedOutput()
+	stderr := err.Error()
 
 	if err != nil {
-		return nil, fmt.Errorf("checker compile failed: %v, output: %s", err, string(output))
+		return nil, &Result{
+			Message:         "Compilation failed",
+			Stdin:           "",
+			Stdout:          string(output),
+			Stderr:          stderr,
+			IsolateMetadata: s.GetParsedMetadata(),
+		}
 	}
 
-	//todo check metadata for errors, tle etc
-	// metaData := s.GetParsedMetadata()
-	
-	outputBin, _ := os.ReadFile(filepath.Join(s.BoxDir, "outputBin"))
-	
-	return outputBin, nil
+	outputBin, err := os.ReadFile(filepath.Join(s.BoxDir, "outputBin"))
+	if err != nil {
+		return nil, &Result{
+			Message:         fmt.Sprintf("Failed to read compiled binary: %v", err),
+			Stdin:           "",
+			Stdout:          string(output),
+			Stderr:          stderr,
+			IsolateMetadata: s.GetParsedMetadata(),
+		}
+	}
+
+	return outputBin, &Result{
+		Stdin:           "",
+		Stdout:          string(output),
+		Stderr:          stderr,
+		IsolateMetadata: s.GetParsedMetadata(),
+	}
 }

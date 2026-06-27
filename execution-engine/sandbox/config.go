@@ -9,6 +9,14 @@ type IsolateConfig struct {
 	WallTimeLimit  float64 //in seconds
 	Stack          int     //in kb, default 64MB
 	FileSizeLimit  int64   //in kb, default 16MB
+	DirMounts      []MountDir
+}
+
+type MountDir struct {
+	Source      string
+	Destination string
+	WriteAccess bool
+	NoExecute   bool
 }
 
 var hardLimits = IsolateConfig{
@@ -22,12 +30,12 @@ var hardLimits = IsolateConfig{
 
 func NewIsolateConfig(opts ...func(*IsolateConfig)) *IsolateConfig {
 	config := &IsolateConfig{
-		MemoryLimit:    256 * 1024,  // 256 MB
-		TimeLimit:      5.0,         // 5 seconds
-		WallTimeLimit:  10.0,        // 10 seconds
-		ExtraTimeLimit: 1.0,         // 1 second
-		Stack:          64 * 1024,   // 64 MB
-		FileSizeLimit:  16 * 1024,   // 16 MB
+		MemoryLimit:    256 * 1024, // 256 MB
+		TimeLimit:      5.0,        // 5 seconds
+		WallTimeLimit:  10.0,       // 10 seconds
+		ExtraTimeLimit: 1.0,        // 1 second
+		Stack:          64 * 1024,  // 64 MB
+		FileSizeLimit:  16 * 1024,  // 16 MB
 	}
 
 	for _, opt := range opts {
