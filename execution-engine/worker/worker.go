@@ -17,10 +17,6 @@ type Worker struct {
 }
 
 const (
-	StdinFile       = "stdin.txt"
-	StdoutFile      = "stdout.txt"
-	StderrFile      = "stderr.txt"
-	MetadataFile    = "metadata.txt"
 	LocalTemp       = "/tmp/execution-engine"
 	CheckerBinFile  = "checkerBin"
 	UserCodeBinFile = "userCodeBin"
@@ -50,38 +46,38 @@ func NewWorker(boxID int, job *job.Job) (*Worker, error) {
 }
 
 func (w *Worker) ExecuteWorker() []job.Result {
-	checkerLanguage := w.Job.ProblemData.CheckerLanguage
 	checkerBin, compileResult := w.CompileCheckerCode()
 	if checkerBin == nil {
 		return []job.Result{compileResult}
 	}
 
-	userCodeLanguage := w.Job.SubmissionData.SourceLanguage
 	userCodeBin, compileResult := w.CompileUserCode()
 	if userCodeBin == nil {
 		return []job.Result{compileResult}
 	}
 
-	userCodeExecuteConfig := sandbox.NewIsolateConfig(func(ic *sandbox.IsolateConfig) {
-		ic.TimeLimit = float64(w.Job.ProblemData.TimeLimit) / 1000
-		ic.MemoryLimit = w.Job.ProblemData.MemoryLimit
-		ic.WallTimeLimit = ic.TimeLimit * 2
-	})
-
-	// results := make([]job.Result, 0, w.Job.ProblemData.TestCount)
+	results := make([]job.Result, 0, w.Job.ProblemData.TestCount)
 
 	for test := 1; test <= w.Job.ProblemData.TestCount; test++ {
 		testInputPath := w.Job.ProblemData.GetTestFilePath(test)
 		testAnswerPath := w.Job.ProblemData.GetAnswerFilePath(test)
 		testOutputPath := w.GetOutputFilePath(test)
 
-		// userMeta :=
-		w.Sandbox.ExecuteCode(userCodeBin, userCodeLanguage, testInputPath, testOutputPath, nil, userCodeExecuteConfig)
-		// checkerMeta :=
-		w.Sandbox.ExecuteCode(checkerBin, checkerLanguage, "", "", []string{testInputPath, testOutputPath, testAnswerPath}, userCodeExecuteConfig)
+		userCodeResult := w.ExecuteUserCode(userCodeBin, testInputPath, testOutputPath)
+		if userCodeResult.Status != "AC" {
+			userCodeResult.Test = test
+			results = append(results, userCodeResult)
+			return results
+		}
+
+		checkerResult := w.ExecuteChecker(checkerBin, testInputPath, testOutputPath, testAnswerPath)
+		if checkerResult.Status != "AC" {
+			checkerResult.Test = test
+			results = append(results, checkerResult)
+		}
 	}
 
-	return nil
+	return results
 }
 
 func (w *Worker) GetOutputDir() string {

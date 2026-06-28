@@ -24,7 +24,7 @@ func (w *Worker) CompileCheckerCode() ([]byte, job.Result) {
 			result.Message = "Checker compilation failed\n" + IsolateMetadataToString(result.IsolateMetadata)
 		}
 
-		return nil, FormatInternalError(result)
+		return nil, FormatError(result, "INT")
 	}
 
 	return checkerBin, job.Result{}
@@ -37,36 +37,29 @@ func (w *Worker) CompileUserCode() ([]byte, job.Result) {
 	userCodeBin, result := w.Sandbox.CompileCode(userCodeSource, userCodeLanguage, "", nil, GetDefaultConfig())
 	if userCodeBin == nil {
 		if result.IsolateMetadata == nil {
-			return nil, FormatInternalError(result)
+			return nil, FormatError(result, "INT")
 		}
 
-		status, message := IsolateMetadataFormat(result.IsolateMetadata)
+		status, message := FormatIsolateMetadata(result.IsolateMetadata, false)
 		if(status == "INT"){
 			result.Message = "Usercode Compilation failed, (Internal error by sandbox) \n" + IsolateMetadataToString(result.IsolateMetadata)
-			return nil, FormatInternalError(result)
+			return nil, FormatError(result, "INT")
 		}
 		if(status == "AC"){
 			result.Message = "Usercode Compilation failed, (Code compiled successfully but no bin was generated) \n" + IsolateMetadataToString(result.IsolateMetadata)
-			return nil, FormatInternalError(result)
+			return nil, FormatError(result, "INT")
 		}
+		result.Message = message
 
-		return nil, job.Result{
-			Test:          0,
-			Memory:        result.IsolateMetadata.Memory,
-			Time:          result.IsolateMetadata.Time,
-			Status:        "CE",
-			Message:       message,
-			InputSnippet:  result.Stdin,
-			OutputSnippet: result.Stdout,
-			AnswerSnippet: result.Stderr,
-		}
+		return nil, FormatError(result, "CE")
 	}
 
 	return userCodeBin, job.Result{}
 }
 
+
 // returns status, message
-func IsolateMetadataFormat(metadata *sandbox.IsolateMetadata) (string, string) {
+func FormatIsolateMetadata(metadata *sandbox.IsolateMetadata, isChecker bool) (string, string) {
 	switch metadata.Status {
 	case "TO":
 		return "TLE", "Time limit exceeded"
@@ -84,6 +77,16 @@ func IsolateMetadataFormat(metadata *sandbox.IsolateMetadata) (string, string) {
 			return "RE", "Runtime Error (Other): " + strconv.Itoa(metadata.ExitSig)
 		}
 	case "RE":
+		if(isChecker){
+			switch metadata.ExitSig {
+			case 1,2:
+				return "WA", "Wrong Answer"
+			case 3:
+				return "FAIL", "Jury Failed"
+			default:
+				return "FAIL", "Jury Failed with Exit Signal: " + strconv.Itoa(metadata.ExitSig)
+			}
+		}
 		return "NZEC", "Non-Zero Exit Code: " + strconv.Itoa(metadata.ExitCode)
 	case "XX":
 		return "INT", "Internal error"
@@ -102,22 +105,21 @@ func IsolateMetadataToString(metadata *sandbox.IsolateMetadata) string {
 	}, "\n")
 }
 
-func FormatInternalError(result *sandbox.Result) job.Result {
+func FormatError(result *sandbox.Result, status string) job.Result {
+	memory := 0
+	time := 0.0
+	if result.IsolateMetadata != nil && status != "INT" {
+		memory = result.IsolateMetadata.Memory
+		time = result.IsolateMetadata.Time
+	}
 	return job.Result{
 		Test:          0,
-		Memory:        0,
-		Time:          0,
-		Status:        "INT",
+		Memory:        memory,
+		Time:          time,
+		Status:        status,
 		Message:       result.Message,
-		InputSnippet:  MessageToSnippet(result.Stdin),
+		InputSnippet:  result.Stdin,
 		OutputSnippet: result.Stdout + "\n Stderr: \n" + result.Stderr,
 		AnswerSnippet: "",
 	}
-}
-
-func MessageToSnippet(message string) string {
-	if len(message) > 500 {
-		return message[:500] + "..."
-	}
-	return message
 }

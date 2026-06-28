@@ -1,6 +1,7 @@
 package sandbox
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -48,15 +49,24 @@ func (s *Sandbox) CompileCode(sourceCode []byte, language, additionalFilesDir st
 	args = append(args, additionalArgs...)
 
 	cmd := exec.Command("isolate", args...)
-	output, err := cmd.CombinedOutput()
-	stderr := err.Error()
+
+	//we can use buffers to capture stdout and stderr since compilation outputs are usually small
+	//maybe in future switch to files only
+	var stdout, stderr *bytes.Buffer
+	stdout = &bytes.Buffer{}
+	stderr = &bytes.Buffer{}
+
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	err = cmd.Run()
 
 	if err != nil {
 		return nil, &Result{
-			Message:         "Compilation failed",
+			Message:         "Compilation failed with error: " + err.Error(),
 			Stdin:           "",
-			Stdout:          string(output),
-			Stderr:          stderr,
+			Stdout:          stdout.String(),
+			Stderr:          stderr.String(),
 			IsolateMetadata: s.GetParsedMetadata(),
 		}
 	}
@@ -66,16 +76,16 @@ func (s *Sandbox) CompileCode(sourceCode []byte, language, additionalFilesDir st
 		return nil, &Result{
 			Message:         fmt.Sprintf("Failed to read compiled binary: %v", err),
 			Stdin:           "",
-			Stdout:          string(output),
-			Stderr:          stderr,
+			Stdout:          stdout.String(),
+			Stderr:          stderr.String(),
 			IsolateMetadata: s.GetParsedMetadata(),
 		}
 	}
 
 	return outputBin, &Result{
 		Stdin:           "",
-		Stdout:          string(output),
-		Stderr:          stderr,
+		Stdout:          stdout.String(),
+		Stderr:          stderr.String(),
 		IsolateMetadata: s.GetParsedMetadata(),
 	}
 }

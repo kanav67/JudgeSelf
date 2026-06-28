@@ -3,6 +3,7 @@ package sandbox
 import (
 	"bufio"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -79,20 +80,5 @@ func (s *Sandbox) GetParsedMetadata() *IsolateMetadata {
 }
 
 func (s *Sandbox) GetMetadataPath() string {
-	return MetadataFile
-}
-
-// todo
-func GetUserVerdict(meta *IsolateMetadata) string {
-	switch meta.Status {
-	case "TO":
-		return "TLE"
-	case "SG":
-		return "RE"
-	case "RE":
-		return "NZEC"
-	case "XX":
-		return "IE"
-	}
-	return "OK"
+	return filepath.Join(s.BoxDir, MetadataFile)
 }

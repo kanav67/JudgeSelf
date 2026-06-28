@@ -35,7 +35,7 @@ type Result struct {
 	Test          int     `json:"test"`
 	Time          float64 `json:"time"`
 	Memory        int     `json:"memory"`
-	Status        string  `json:"status"` //AC, CE, WA, TLE, RE, INT
+	Status        string  `json:"status"` //AC, CE, WA, TLE, IL(Idle Limit), RE, INT
 	Message       string  `json:"message"`
 	InputSnippet  string  `json:"input_snippet"`
 	OutputSnippet string  `json:"output_snippet"`

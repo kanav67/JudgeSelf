@@ -14,7 +14,7 @@ const (
 	StdoutFile   = "stdout.txt"
 	StderrFile   = "stderr.txt"
 	MetadataFile = "metadata.txt"
-	
+	MaxBytesToRead = 64 * 1024 //64kb
 )
 
 type Sandbox struct {
@@ -48,6 +48,7 @@ func (s *Sandbox) ReInitialize() error {
 	s.WorkDir = strings.TrimSpace(string(out))
 	s.BoxDir = filepath.Join(s.WorkDir, "box")
 
+	//todo handle error
 	s.InitBaseFiles();
 
 	return nil
@@ -70,6 +71,18 @@ func (s *Sandbox) Cleanup() error {
 }
 
 func (s *Sandbox) baseIsolateArgs() []string {
-	args := []string{"-b", strconv.Itoa(s.BoxID)}
+	args := []string{"-b", strconv.Itoa(s.BoxID), "--silent"}
 	return args
+}
+
+func (s *Sandbox) GetDefaultStdinPath() string {
+	return filepath.Join(s.BoxDir, StdinFile)
+}
+
+func (s *Sandbox) GetDefaultStdoutPath() string {
+	return filepath.Join(s.BoxDir, StdoutFile)
+}
+
+func (s *Sandbox) GetDefaultStderrPath() string {
+	return filepath.Join(s.BoxDir, StderrFile)
 }
