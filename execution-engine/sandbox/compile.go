@@ -73,6 +73,7 @@ func (s *Sandbox) CompileCode(sourceCode []byte, language, additionalFilesDir st
 
 	outputBin, err := os.ReadFile(filepath.Join(s.BoxDir, "outputBin"))
 	if err != nil {
+		//always discard the read bytes
 		return nil, &Result{
 			Message:         fmt.Sprintf("Failed to read compiled binary: %v", err),
 			Stdin:           "",

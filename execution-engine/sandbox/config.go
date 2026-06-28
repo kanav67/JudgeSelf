@@ -15,7 +15,7 @@ type IsolateConfig struct {
 type MountDir struct {
 	Source      string
 	Destination string
-	WriteAccess bool
+	Writable    bool
 	NoExecute   bool
 }
 

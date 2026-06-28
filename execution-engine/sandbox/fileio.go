@@ -7,6 +7,19 @@ import (
 	"path/filepath"
 )
 
+func ReadSnippet(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	limitedReader := io.LimitReader(file, MaxBytesToRead)
+	snippet, err := io.ReadAll(limitedReader)
+
+	return string(snippet), err
+}
+
 func CopyFile(src, dst string) error {
 	sourceFile, err := os.Open(src)
 	if err != nil {

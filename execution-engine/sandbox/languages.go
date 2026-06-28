@@ -20,12 +20,12 @@ type LanguageDetails struct {
 
 // todo remove after testing is done
 var runtimeLanguageMap = map[string]LanguageDetails{
-	"python": {Compile: "", Execute: "python3 {input}"},
+	"python":  {Compile: "", Execute: "python3 {input}"},
 	"python3": {Compile: "", Execute: "python3 {input}"},
-	"py": {Compile: "", Execute: "python3 {input}"},
-	"cpp": {Compile: "g++ {input} -o {output}", Execute: "./{output}"},
-	"c++": {Compile: "g++ {input} -o {output}", Execute: "./{output}"},
-	"g++": {Compile: "g++ {input} -o {output}", Execute: "./{output}"},
+	"py":      {Compile: "", Execute: "python3 {input}"},
+	"cpp":     {Compile: "g++ {input} -o {output}", Execute: "./{output}"},
+	"c++":     {Compile: "g++ {input} -o {output}", Execute: "./{output}"},
+	"g++":     {Compile: "g++ {input} -o {output}", Execute: "./{output}"},
 }
 
 func init() {

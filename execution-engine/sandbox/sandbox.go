@@ -10,19 +10,18 @@ import (
 )
 
 const (
-	StdinFile    = "stdin.txt"
-	StdoutFile   = "stdout.txt"
-	StderrFile   = "stderr.txt"
-	MetadataFile = "metadata.txt"
+	StdinFile      = "stdin.txt"
+	StdoutFile     = "stdout.txt"
+	StderrFile     = "stderr.txt"
+	MetadataFile   = "metadata.txt"
 	MaxBytesToRead = 64 * 1024 //64kb
 )
 
 type Sandbox struct {
-	BoxID    int
-	WorkDir  string
-	BoxDir   string
+	BoxID   int
+	WorkDir string
+	BoxDir  string
 }
-
 
 func NewSandbox(boxID int) (*Sandbox, error) {
 	s := &Sandbox{
@@ -49,7 +48,7 @@ func (s *Sandbox) ReInitialize() error {
 	s.BoxDir = filepath.Join(s.WorkDir, "box")
 
 	//todo handle error
-	s.InitBaseFiles();
+	s.InitBaseFiles()
 
 	return nil
 }

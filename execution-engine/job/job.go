@@ -35,7 +35,7 @@ type Result struct {
 	Test          int     `json:"test"`
 	Time          float64 `json:"time"`
 	Memory        int     `json:"memory"`
-	Status        string  `json:"status"` //AC, CE, WA, TLE, IL(Idle Limit), RE, INT
+	Status        string  `json:"status"` //AC, CE, WA, TLE, IL(Idle Limit), RE(has variations), INT(Internal Error)
 	Message       string  `json:"message"`
 	InputSnippet  string  `json:"input_snippet"`
 	OutputSnippet string  `json:"output_snippet"`
@@ -60,9 +60,17 @@ func (pd *ProblemData) GetTestsDir() string {
 	return filepath.Join(pd.LocalProblemDir, "tests")
 }
 
-func (pd *ProblemData) GetTestFilePath(test int) string {
+func (pd *ProblemData) GetTestFileName(test int) string {
 	length := len(strconv.Itoa(pd.TestCount))
-	return filepath.Join(pd.GetTestsDir(), fmt.Sprintf("%0*d", length, test))
+	return fmt.Sprintf("%0*d", length, test)
+}
+
+func (pd *ProblemData) GetAnswerFileName(test int) string {
+	return pd.GetTestFileName(test) + ".a"
+}
+
+func (pd *ProblemData) GetTestFilePath(test int) string {
+	return filepath.Join(pd.GetTestsDir(), pd.GetTestFileName(test))
 }
 
 func (pd *ProblemData) GetAnswerFilePath(test int) string {

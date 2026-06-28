@@ -71,10 +71,29 @@ func (w *Worker) ExecuteWorker() []job.Result {
 		}
 
 		checkerResult := w.ExecuteChecker(checkerBin, testInputPath, testOutputPath, testAnswerPath)
-		if checkerResult.Status != "AC" {
+
+		if checkerResult.Status != "AC" && checkerResult.Status != "WA" {
 			checkerResult.Test = test
+			//avoid confusing user with unrealistic time and memory usage from checker
+			checkerResult.Time = 0
+			checkerResult.Memory = 0
 			results = append(results, checkerResult)
+			return results
 		}
+
+		answerSnippet, _ := sandbox.ReadSnippet(testAnswerPath)
+
+		finalTestResult := job.Result{
+			Test:          test,
+			Time:          userCodeResult.Time,
+			Memory:        userCodeResult.Memory,
+			Status:        checkerResult.Status,
+			Message:       checkerResult.Message,
+			InputSnippet:  userCodeResult.InputSnippet,
+			OutputSnippet: userCodeResult.OutputSnippet,
+			AnswerSnippet: answerSnippet,
+		}
+		results = append(results, finalTestResult)
 	}
 
 	return results
@@ -84,9 +103,13 @@ func (w *Worker) GetOutputDir() string {
 	return filepath.Join(w.LocalDir, OutputDir)
 }
 
-func (w *Worker) GetOutputFilePath(test int) string {
+func (w *Worker) GetOutputFileName(test int) string {
 	length := len(strconv.Itoa(w.Job.ProblemData.TestCount))
-	return filepath.Join(w.GetOutputDir(), fmt.Sprintf("%0*d.out", length, test))
+	return fmt.Sprintf("%0*d.out", length, test)
+}
+
+func (w *Worker) GetOutputFilePath(test int) string {
+	return filepath.Join(w.GetOutputDir(), w.GetOutputFileName(test))
 }
 
 func GetDefaultConfig() *sandbox.IsolateConfig {

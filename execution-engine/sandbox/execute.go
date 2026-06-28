@@ -1,7 +1,6 @@
 package sandbox
 
 import (
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +12,7 @@ func (s *Sandbox) ExecuteCode(sourceBin []byte, language, stdinFilePath, stdoutF
 	destPath := filepath.Join(s.BoxDir, "source")
 	_ = os.WriteFile(destPath, sourceBin, 0755)
 
+	//assuming language is valid as compile command would have caught it
 	executeCmd, _ := GetExecuteCommand(language, "source")
 
 	args := s.baseIsolateArgs()
@@ -78,17 +78,4 @@ func (s *Sandbox) ExecuteCode(sourceBin []byte, language, stdinFilePath, stdoutF
 		Stderr:          stderrSnippet,
 		IsolateMetadata: s.GetParsedMetadata(),
 	}
-}
-
-func ReadSnippet(filePath string) (string, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	limitedReader := io.LimitReader(file, MaxBytesToRead)
-	snippet, err := io.ReadAll(limitedReader)
-
-	return string(snippet), err
 }
