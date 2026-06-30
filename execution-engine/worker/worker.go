@@ -10,6 +10,7 @@ import (
 )
 
 type Worker struct {
+	Engine  engine.Engine
 	BoxID    int
 	Sandbox  *sandbox.Sandbox
 	LocalDir string
@@ -23,11 +24,10 @@ const (
 	OutputDir       = "output"
 )
 
-func NewWorker(boxID int, job *engine.Job) (*Worker, error) {
+func NewWorker(engine engine.Engine, boxID int) (*Worker, error) {
 	w := &Worker{
+		Engine:  engine,
 		BoxID:    boxID,
-		LocalDir: filepath.Join(LocalTemp, job.SubmissionData.SubmissionID),
-		Job:      job,
 	}
 
 	sandbox, err := sandbox.NewSandbox(boxID)
@@ -45,6 +45,73 @@ func NewWorker(boxID int, job *engine.Job) (*Worker, error) {
 	return w, nil
 }
 
+func (w *Worker) CleanUp() {
+	w.Sandbox.Cleanup()
+}
+
+func (w *Worker) RunWorker(job *engine.Job) error {
+	w.LocalDir = filepath.Join(LocalTemp, job.SubmissionData.SubmissionID)
+	w.Job = job
+
+	w.Sandbox.ReInitialize()
+
+	results := []engine.Result{}
+
+	//errors relating to downloading problem data
+	err := w.PreExecute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "PreExecute failed on worker %d while executing job %s: %v", w.BoxID, w.Job.SubmissionData.SubmissionID, err)
+		return err
+	}
+
+	//if some error occurs treat it as internal error
+	results = w.ExecuteWorker()
+
+	//errors relating to saving to db
+	err = w.PostExecute(results)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "PostExecute failed on worker %d while executing job %s: %v", w.BoxID, w.Job.SubmissionData.SubmissionID, err)
+		return err
+	}
+
+	return nil
+}
+
+func (w *Worker) PreExecute() error {
+	problemData, err := w.Engine.Cache.GetOrLoad(w.Job.SubmissionData.ProblemID)
+	if err != nil {
+		return fmt.Errorf("Failed to get or load problem data: %v", err)
+	}
+	w.Job.ProblemData = &problemData
+
+	return nil
+}
+
+func (w *Worker) PostExecute(results []engine.Result) error {
+	status := results[len(results)-1].Status
+	maxTime := int64(0)
+	maxMemory := int64(0)
+	for _, result := range results {
+		if int64(result.Time) > maxTime {
+			maxTime = int64(result.Time)
+		}
+		if int64(result.Memory) > maxMemory {
+			maxMemory = int64(result.Memory)
+		}
+	}
+	w.Job.Verdict = &engine.Verdict{
+		SubmissionID: w.Job.SubmissionData.SubmissionID,
+		Status:       status,
+		Time:         maxTime,
+		Memory:       maxMemory,
+		Results:      results,
+	}
+
+	w.Engine.DbClient.UpdateSubmission(*w.Job.Verdict)
+
+	return nil
+}
+
 func (w *Worker) ExecuteWorker() []engine.Result {
 	checkerBin, compileResult := w.CompileCheckerCode()
 	if checkerBin == nil {
@@ -57,6 +124,17 @@ func (w *Worker) ExecuteWorker() []engine.Result {
 	}
 
 	results := make([]engine.Result, 0, w.Job.ProblemData.TestCount)
+
+	if w.Job.ProblemData.TestCount == 0 {
+		results = append(results, engine.Result{
+			Test:    0,
+			Time:    0,
+			Memory:  0,
+			Status:  "INT",
+			Message: "No test cases found for this problem.",
+		})
+		return results
+	}
 
 	for test := 1; test <= w.Job.ProblemData.TestCount; test++ {
 		testInputPath := w.Job.ProblemData.GetTestFilePath(test)
