@@ -1,9 +1,8 @@
 package engine
 
 import (
-	"context"
 	"execution-engine/config"
-	"execution-engine/worker"
+	"execution-engine/models"
 	"fmt"
 	"sync"
 )
@@ -16,7 +15,7 @@ type Engine struct {
 	RabbitMQClient  *RabbitMQConsumer
 	ReddisPublisher *RedisPublisher
 
-	JobQueue chan Job
+	JobQueue chan models.Job
 	Wg       sync.WaitGroup
 }
 
@@ -58,17 +57,4 @@ func NewEngine() (*Engine, error) {
 	engine.ReddisPublisher = redisPublisher
 
 	return engine, nil
-}
-
-func (e *Engine) StartPool(ctx context.Context) error {
-	for i := 1; i <= e.Config.WorkerCount; i++ {
-		worker, err := worker.NewWorker(e, i)
-		if err != nil {
-			return err
-		}
-		
-		e.Wg.Add(1)
-		go worker.Start(ctx, e.JobQueue)
-	}
-	return nil
 }

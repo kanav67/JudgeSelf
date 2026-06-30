@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"encoding/json"
+	"execution-engine/models"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -29,7 +30,7 @@ func (p *RedisPublisher) Close() error {
 	return p.client.Close()
 }
 
-func (p *RedisPublisher) Publish(ctx context.Context, verdict Verdict) error {
+func (p *RedisPublisher) Publish(ctx context.Context, verdict models.Verdict) error {
 	data, err := json.Marshal(verdict)
 	if err != nil {
 		return err

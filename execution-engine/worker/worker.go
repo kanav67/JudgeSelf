@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"execution-engine/engine"
+	"execution-engine/models"
 	"execution-engine/sandbox"
 	"fmt"
 	"log"
@@ -12,11 +13,11 @@ import (
 )
 
 type Worker struct {
-	Engine  *engine.Engine
+	Engine   *engine.Engine
 	BoxID    int
 	Sandbox  *sandbox.Sandbox
 	LocalDir string
-	Job      *engine.Job
+	Job      *models.Job
 }
 
 const (
@@ -28,8 +29,8 @@ const (
 
 func NewWorker(engine *engine.Engine, boxID int) (*Worker, error) {
 	w := &Worker{
-		Engine:  engine,
-		BoxID:    boxID,
+		Engine: engine,
+		BoxID:  boxID,
 	}
 
 	sandbox, err := sandbox.NewSandbox(boxID)
@@ -51,25 +52,25 @@ func (w *Worker) CleanUp() {
 	w.Sandbox.Cleanup()
 }
 
-func (w *Worker) Start(ctx context.Context, jobQueue <-chan engine.Job) {
+func (w *Worker) Start(ctx context.Context, jobQueue <-chan models.Job) {
 	defer w.Engine.Wg.Done()
-	
+
 	log.Printf("[Worker %d] Online and waiting for jobs...", w.BoxID)
 	for {
 		select {
 		case <-ctx.Done():
 			log.Printf("[Worker %d] Shutting down...", w.BoxID)
 			return
-			
+
 		case job, ok := <-jobQueue:
 			if !ok {
 				return //Channel closed
-			}			
-			err := w.RunWorker(ctx, job)
-			
+			}
+			err := w.RunWorker(ctx, &job)
+
 			if err != nil {
 				log.Printf("[Worker %d] Error processing %s: %v", w.BoxID, job.SubmissionData.SubmissionID, err)
-				_ = job.Nack(false) 
+				_ = job.Nack(false)
 			} else {
 				log.Printf("[Worker %d] Successfully finished %s", w.BoxID, job.SubmissionData.SubmissionID)
 				_ = job.Ack()
@@ -78,13 +79,13 @@ func (w *Worker) Start(ctx context.Context, jobQueue <-chan engine.Job) {
 	}
 }
 
-func (w *Worker) RunWorker(ctx context.Context, job *engine.Job) error {
+func (w *Worker) RunWorker(ctx context.Context, job *models.Job) error {
 	w.LocalDir = filepath.Join(LocalTemp, job.SubmissionData.SubmissionID)
 	w.Job = job
 
 	w.Sandbox.ReInitialize()
 
-	results := []engine.Result{}
+	results := []models.Result{}
 
 	//errors relating to downloading problem data
 	err := w.PreExecute(ctx)
@@ -116,7 +117,7 @@ func (w *Worker) PreExecute(ctx context.Context) error {
 	return nil
 }
 
-func (w *Worker) PostExecute(ctx context.Context, results []engine.Result) error {
+func (w *Worker) PostExecute(ctx context.Context, results []models.Result) error {
 	status := results[len(results)-1].Status
 	maxTime := int64(0)
 	maxMemory := int64(0)
@@ -128,7 +129,7 @@ func (w *Worker) PostExecute(ctx context.Context, results []engine.Result) error
 			maxMemory = int64(result.Memory)
 		}
 	}
-	w.Job.Verdict = &engine.Verdict{
+	w.Job.Verdict = &models.Verdict{
 		SubmissionID: w.Job.SubmissionData.SubmissionID,
 		Status:       status,
 		Time:         maxTime,
@@ -141,22 +142,22 @@ func (w *Worker) PostExecute(ctx context.Context, results []engine.Result) error
 	return nil
 }
 
-//todo use ctx
-func (w *Worker) ExecuteWorker() []engine.Result {
+// todo use ctx
+func (w *Worker) ExecuteWorker() []models.Result {
 	checkerBin, compileResult := w.CompileCheckerCode()
 	if checkerBin == nil {
-		return []engine.Result{compileResult}
+		return []models.Result{compileResult}
 	}
 
 	userCodeBin, compileResult := w.CompileUserCode()
 	if userCodeBin == nil {
-		return []engine.Result{compileResult}
+		return []models.Result{compileResult}
 	}
 
-	results := make([]engine.Result, 0, w.Job.ProblemData.TestCount)
+	results := make([]models.Result, 0, w.Job.ProblemData.TestCount)
 
 	if w.Job.ProblemData.TestCount == 0 {
-		results = append(results, engine.Result{
+		results = append(results, models.Result{
 			Test:    0,
 			Time:    0,
 			Memory:  0,
@@ -191,7 +192,7 @@ func (w *Worker) ExecuteWorker() []engine.Result {
 
 		answerSnippet, _ := sandbox.ReadSnippet(testAnswerPath)
 
-		finalTestResult := engine.Result{
+		finalTestResult := models.Result{
 			Test:          test,
 			Time:          userCodeResult.Time,
 			Memory:        userCodeResult.Memory,

@@ -1,11 +1,11 @@
 package worker
 
 import (
-	"execution-engine/engine"
+	"execution-engine/models"
 	"os"
 )
 
-func (w *Worker) CompileCheckerCode() ([]byte, engine.Result) {
+func (w *Worker) CompileCheckerCode() ([]byte, models.Result) {
 	checkerLanguage := w.Job.ProblemData.CheckerLanguage
 	checkerSource, _ := os.ReadFile(w.Job.ProblemData.GetCheckerSourcePath())
 	checkerBin, result := w.Sandbox.CompileCode(
@@ -24,10 +24,10 @@ func (w *Worker) CompileCheckerCode() ([]byte, engine.Result) {
 		return nil, FormatResult(result, "INT")
 	}
 
-	return checkerBin, engine.Result{}
+	return checkerBin, models.Result{}
 }
 
-func (w *Worker) CompileUserCode() ([]byte, engine.Result) {
+func (w *Worker) CompileUserCode() ([]byte, models.Result) {
 	userCodeSource := []byte(w.Job.SubmissionData.SourceCode)
 	userCodeLanguage := w.Job.SubmissionData.SourceLanguage
 
@@ -51,5 +51,5 @@ func (w *Worker) CompileUserCode() ([]byte, engine.Result) {
 		return nil, FormatResult(result, "CE")
 	}
 
-	return userCodeBin, engine.Result{}
+	return userCodeBin, models.Result{}
 }

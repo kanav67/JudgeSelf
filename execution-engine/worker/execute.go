@@ -1,13 +1,13 @@
 package worker
 
 import (
-	"execution-engine/engine"
+	"execution-engine/models"
 	"execution-engine/sandbox"
 	"path/filepath"
 )
 
 // todo
-func (w *Worker) ExecuteUserCode(userCodeBin []byte, testInputPath, testOutputPath string) engine.Result {
+func (w *Worker) ExecuteUserCode(userCodeBin []byte, testInputPath, testOutputPath string) models.Result {
 	userCodeLanguage := w.Job.SubmissionData.SourceLanguage
 
 	userCodeExecuteConfig := sandbox.NewIsolateConfig(func(ic *sandbox.IsolateConfig) {
@@ -33,7 +33,7 @@ func (w *Worker) ExecuteUserCode(userCodeBin []byte, testInputPath, testOutputPa
 }
 
 // todo
-func (w *Worker) ExecuteChecker(checkerBin []byte, testInputPath, testOutputPath, testAnswerPath string) engine.Result {
+func (w *Worker) ExecuteChecker(checkerBin []byte, testInputPath, testOutputPath, testAnswerPath string) models.Result {
 	checkerLanguage := w.Job.ProblemData.CheckerLanguage
 
 	checkerExecuteConfig := GetDefaultConfig()

@@ -2,13 +2,14 @@ package engine
 
 import (
 	"context"
+	"execution-engine/models"
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Envelope struct {
-	Job      Job
+	Job      models.Job
 	Delivery amqp.Delivery
 }
 
@@ -50,7 +51,7 @@ func (c *RabbitMQConsumer) Close() {
 	}
 }
 
-func (c *RabbitMQConsumer) Consume(ctx context.Context, jobQueue chan<- Job) error {
+func (c *RabbitMQConsumer) Consume(ctx context.Context, jobQueue chan<- models.Job) error {
 	deliveries, err := c.ch.Consume(c.queue, "", false, false, false, false, nil)
 	if err != nil {
 		return err
@@ -63,7 +64,7 @@ func (c *RabbitMQConsumer) Consume(ctx context.Context, jobQueue chan<- Job) err
 		case delivery, ok := <-deliveries:
 			if !ok {
 				log.Println("Delivery channel closed")
-				return nil 
+				return nil
 			}
 			job, err := decode(delivery.Body)
 			if err != nil {
@@ -84,10 +85,10 @@ func (c *RabbitMQConsumer) Consume(ctx context.Context, jobQueue chan<- Job) err
 	}
 }
 
-func decode(body []byte) (Job, error) {
-	data, err := ParseSubmissionData(body)
+func decode(body []byte) (models.Job, error) {
+	data, err := models.ParseSubmissionData(body)
 	if err != nil {
-		return Job{}, err
+		return models.Job{}, err
 	}
-	return Job{SubmissionData: &data}, nil
+	return models.Job{SubmissionData: &data}, nil
 }

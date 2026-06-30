@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"execution-engine/models"
 	"fmt"
 	"strings"
 	"sync"
@@ -9,7 +10,7 @@ import (
 )
 
 type cacheDbItem struct {
-	data      ProblemData
+	data      models.ProblemData
 	expiresAt time.Time
 }
 
@@ -38,21 +39,21 @@ func NewCache(DbClient *PostgresClient, S3Client *S3Client) *Cache {
 	}
 }
 
-func (c *Cache) GetOrLoad(ctx context.Context, problemID string) (ProblemData, error) {
+func (c *Cache) GetOrLoad(ctx context.Context, problemID string) (models.ProblemData, error) {
 	problemData, err := c.DbCache.GetOrLoad(ctx, problemID)
 	if err != nil {
-		return ProblemData{}, err
+		return models.ProblemData{}, err
 	}
 	localProblemCachePath, err := c.S3Cache.GetOrLoad(ctx, problemData)
 	if err != nil {
-		return ProblemData{}, err
+		return models.ProblemData{}, err
 	}
 	problemData.LocalProblemDir = localProblemCachePath
 
 	return problemData, nil
 }
 
-func (c *DbCache) GetOrLoad(ctx context.Context, problemId string) (ProblemData, error) {
+func (c *DbCache) GetOrLoad(ctx context.Context, problemId string) (models.ProblemData, error) {
 	c.mu.RLock()
 
 	item, exists := c.store[problemId]
@@ -74,7 +75,7 @@ func (c *DbCache) GetOrLoad(ctx context.Context, problemId string) (ProblemData,
 
 	problemData, err := c.DbClient.GetProblemData(ctx, problemId)
 	if err != nil {
-		return ProblemData{}, fmt.Errorf("Failed to get problem data from database: %v", err)
+		return models.ProblemData{}, fmt.Errorf("Failed to get problem data from database: %v", err)
 	}
 
 	c.store[problemId] = cacheDbItem{
@@ -84,7 +85,7 @@ func (c *DbCache) GetOrLoad(ctx context.Context, problemId string) (ProblemData,
 	return item.data, nil
 }
 
-func (c *S3Cache) GetOrLoad(ctx context.Context, problemData ProblemData) (string, error) {
+func (c *S3Cache) GetOrLoad(ctx context.Context, problemData models.ProblemData) (string, error) {
 	c.mu.RLock()
 
 	key := strings.Join([]string{problemData.ProblemID, problemData.ProblemVersion}, "_")

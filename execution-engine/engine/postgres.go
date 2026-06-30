@@ -3,7 +3,9 @@ package engine
 import (
 	"context"
 	"encoding/json"
+	"execution-engine/models"
 	"fmt"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -33,7 +35,7 @@ func (r *PostgresClient) Close() {
 	r.pool.Close()
 }
 
-func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (ProblemData, error) {
+func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (models.ProblemData, error) {
 	query := fmt.Sprintf(`
 	SELECT 
 	problem_id,
@@ -45,7 +47,7 @@ func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (
 	problem_zip_key 
 	FROM %s WHERE id = $1`, r.problemTable)
 
-	var data ProblemData
+	var data models.ProblemData
 	err := r.pool.QueryRow(ctx, query, problemID).Scan(
 		&data.ProblemID,
 		&data.ProblemVersion,
@@ -57,13 +59,13 @@ func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (
 	)
 
 	if err != nil {
-		return ProblemData{}, err
+		return models.ProblemData{}, err
 	}
 
 	return data, nil
 }
 
-func (r *PostgresClient) UpdateSubmission(ctx context.Context, verdict Verdict) error {
+func (r *PostgresClient) UpdateSubmission(ctx context.Context, verdict models.Verdict) error {
 	query := fmt.Sprintf(`UPDATE %s SET status = $1, time = $2, memory = $3, results = $4, updated_at = NOW() WHERE id = $5`, r.submissionTable)
 	jsonData, err := json.Marshal(verdict.Results)
 	if err != nil {
