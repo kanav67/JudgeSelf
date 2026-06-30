@@ -1,7 +1,7 @@
 package worker
 
 import (
-	job "execution-engine/job"
+	"execution-engine/engine"
 	"execution-engine/sandbox"
 	"fmt"
 	"os"
@@ -13,7 +13,7 @@ type Worker struct {
 	BoxID    int
 	Sandbox  *sandbox.Sandbox
 	LocalDir string
-	Job      *job.Job
+	Job      *engine.Job
 }
 
 const (
@@ -23,7 +23,7 @@ const (
 	OutputDir       = "output"
 )
 
-func NewWorker(boxID int, job *job.Job) (*Worker, error) {
+func NewWorker(boxID int, job *engine.Job) (*Worker, error) {
 	w := &Worker{
 		BoxID:    boxID,
 		LocalDir: filepath.Join(LocalTemp, job.SubmissionData.SubmissionID),
@@ -45,18 +45,18 @@ func NewWorker(boxID int, job *job.Job) (*Worker, error) {
 	return w, nil
 }
 
-func (w *Worker) ExecuteWorker() []job.Result {
+func (w *Worker) ExecuteWorker() []engine.Result {
 	checkerBin, compileResult := w.CompileCheckerCode()
 	if checkerBin == nil {
-		return []job.Result{compileResult}
+		return []engine.Result{compileResult}
 	}
 
 	userCodeBin, compileResult := w.CompileUserCode()
 	if userCodeBin == nil {
-		return []job.Result{compileResult}
+		return []engine.Result{compileResult}
 	}
 
-	results := make([]job.Result, 0, w.Job.ProblemData.TestCount)
+	results := make([]engine.Result, 0, w.Job.ProblemData.TestCount)
 
 	for test := 1; test <= w.Job.ProblemData.TestCount; test++ {
 		testInputPath := w.Job.ProblemData.GetTestFilePath(test)
@@ -83,7 +83,7 @@ func (w *Worker) ExecuteWorker() []job.Result {
 
 		answerSnippet, _ := sandbox.ReadSnippet(testAnswerPath)
 
-		finalTestResult := job.Result{
+		finalTestResult := engine.Result{
 			Test:          test,
 			Time:          userCodeResult.Time,
 			Memory:        userCodeResult.Memory,

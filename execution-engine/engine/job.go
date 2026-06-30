@@ -1,4 +1,4 @@
-package job
+package engine
 
 import (
 	"encoding/json"
@@ -15,6 +15,8 @@ type SubmissionData struct {
 }
 
 type ProblemData struct {
+	ProblemID       string
+	ProblemVersion  string
 	TimeLimit       int64 //ms
 	MemoryLimit     int64 //kb
 	TestCount       int

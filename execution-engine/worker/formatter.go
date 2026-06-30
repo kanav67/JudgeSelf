@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"execution-engine/job"
+	"execution-engine/engine"
 	"execution-engine/sandbox"
 	"strconv"
 	"strings"
@@ -54,14 +54,14 @@ func IsolateMetadataToString(metadata *sandbox.IsolateMetadata) string {
 	}, "\n")
 }
 
-func FormatResult(result *sandbox.Result, status string) job.Result {
+func FormatResult(result *sandbox.Result, status string) engine.Result {
 	memory := 0
 	time := 0.0
 	if result.IsolateMetadata != nil && status != "INT" {
 		memory = result.IsolateMetadata.Memory
 		time = result.IsolateMetadata.Time
 	}
-	return job.Result{
+	return engine.Result{
 		Test:          0,
 		Memory:        memory,
 		Time:          time,
