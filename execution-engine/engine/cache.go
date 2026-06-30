@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -37,12 +38,12 @@ func NewCache(DbClient *PostgresClient, S3Client *S3Client) *Cache {
 	}
 }
 
-func (c *Cache) GetOrLoad(problemID string) (ProblemData, error) {
-	problemData, err := c.DbCache.GetOrLoad(problemID)
+func (c *Cache) GetOrLoad(ctx context.Context, problemID string) (ProblemData, error) {
+	problemData, err := c.DbCache.GetOrLoad(ctx, problemID)
 	if err != nil {
 		return ProblemData{}, err
 	}
-	localProblemCachePath, err := c.S3Cache.GetOrLoad(problemData)
+	localProblemCachePath, err := c.S3Cache.GetOrLoad(ctx, problemData)
 	if err != nil {
 		return ProblemData{}, err
 	}
@@ -51,7 +52,7 @@ func (c *Cache) GetOrLoad(problemID string) (ProblemData, error) {
 	return problemData, nil
 }
 
-func (c *DbCache) GetOrLoad(problemId string) (ProblemData, error) {
+func (c *DbCache) GetOrLoad(ctx context.Context, problemId string) (ProblemData, error) {
 	c.mu.RLock()
 
 	item, exists := c.store[problemId]
@@ -71,7 +72,7 @@ func (c *DbCache) GetOrLoad(problemId string) (ProblemData, error) {
 		return item.data, nil
 	}
 
-	problemData, err := c.DbClient.GetProblemData(problemId)
+	problemData, err := c.DbClient.GetProblemData(ctx, problemId)
 	if err != nil {
 		return ProblemData{}, fmt.Errorf("Failed to get problem data from database: %v", err)
 	}
@@ -83,7 +84,7 @@ func (c *DbCache) GetOrLoad(problemId string) (ProblemData, error) {
 	return item.data, nil
 }
 
-func (c *S3Cache) GetOrLoad(problemData ProblemData) (string, error) {
+func (c *S3Cache) GetOrLoad(ctx context.Context, problemData ProblemData) (string, error) {
 	c.mu.RLock()
 
 	key := strings.Join([]string{problemData.ProblemID, problemData.ProblemVersion}, "_")
@@ -103,7 +104,7 @@ func (c *S3Cache) GetOrLoad(problemData ProblemData) (string, error) {
 	}
 
 	localProblemCachePath := "/tmp/execution-engine/problems/" + key
-	err := c.S3Client.DownloadZip(problemData.S3Hash, localProblemCachePath)
+	err := c.S3Client.DownloadZip(ctx, problemData.S3Hash, localProblemCachePath)
 	if err != nil {
 		return "", fmt.Errorf("Failed to download problem zip from S3: %v", err)
 	}

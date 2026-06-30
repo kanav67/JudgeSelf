@@ -7,12 +7,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type Publisher struct {
+type RedisPublisher struct {
 	client *redis.Client
 	channel string
 }
 
-func NewRedisPublisher(url, channel string) (*Publisher, error) {
+func NewRedisPublisher(url, channel string) (*RedisPublisher, error) {
 	opt, err := redis.ParseURL(url)
 	if err != nil {
 		return nil, err
@@ -22,14 +22,14 @@ func NewRedisPublisher(url, channel string) (*Publisher, error) {
 		_ = client.Close()
 		return nil, err
 	}
-	return &Publisher{client: client, channel: channel}, nil
+	return &RedisPublisher{client: client, channel: channel}, nil
 }
 
-func (p *Publisher) Close() error {
+func (p *RedisPublisher) Close() error {
 	return p.client.Close()
 }
 
-func (p *Publisher) Publish(ctx context.Context, verdict Verdict) error {
+func (p *RedisPublisher) Publish(ctx context.Context, verdict Verdict) error {
 	data, err := json.Marshal(verdict)
 	if err != nil {
 		return err

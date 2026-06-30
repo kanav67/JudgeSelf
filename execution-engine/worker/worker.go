@@ -1,16 +1,18 @@
 package worker
 
 import (
+	"context"
 	"execution-engine/engine"
 	"execution-engine/sandbox"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 )
 
 type Worker struct {
-	Engine  engine.Engine
+	Engine  *engine.Engine
 	BoxID    int
 	Sandbox  *sandbox.Sandbox
 	LocalDir string
@@ -24,7 +26,7 @@ const (
 	OutputDir       = "output"
 )
 
-func NewWorker(engine engine.Engine, boxID int) (*Worker, error) {
+func NewWorker(engine *engine.Engine, boxID int) (*Worker, error) {
 	w := &Worker{
 		Engine:  engine,
 		BoxID:    boxID,
@@ -49,7 +51,34 @@ func (w *Worker) CleanUp() {
 	w.Sandbox.Cleanup()
 }
 
-func (w *Worker) RunWorker(job *engine.Job) error {
+func (w *Worker) Start(ctx context.Context, jobQueue <-chan engine.Job) {
+	defer w.Engine.Wg.Done()
+	
+	log.Printf("[Worker %d] Online and waiting for jobs...", w.BoxID)
+	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("[Worker %d] Shutting down...", w.BoxID)
+			return
+			
+		case job, ok := <-jobQueue:
+			if !ok {
+				return //Channel closed
+			}			
+			err := w.RunWorker(ctx, job)
+			
+			if err != nil {
+				log.Printf("[Worker %d] Error processing %s: %v", w.BoxID, job.SubmissionData.SubmissionID, err)
+				_ = job.Nack(false) 
+			} else {
+				log.Printf("[Worker %d] Successfully finished %s", w.BoxID, job.SubmissionData.SubmissionID)
+				_ = job.Ack()
+			}
+		}
+	}
+}
+
+func (w *Worker) RunWorker(ctx context.Context, job *engine.Job) error {
 	w.LocalDir = filepath.Join(LocalTemp, job.SubmissionData.SubmissionID)
 	w.Job = job
 
@@ -58,7 +87,7 @@ func (w *Worker) RunWorker(job *engine.Job) error {
 	results := []engine.Result{}
 
 	//errors relating to downloading problem data
-	err := w.PreExecute()
+	err := w.PreExecute(ctx)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "PreExecute failed on worker %d while executing job %s: %v", w.BoxID, w.Job.SubmissionData.SubmissionID, err)
 		return err
@@ -68,7 +97,7 @@ func (w *Worker) RunWorker(job *engine.Job) error {
 	results = w.ExecuteWorker()
 
 	//errors relating to saving to db
-	err = w.PostExecute(results)
+	err = w.PostExecute(ctx, results)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "PostExecute failed on worker %d while executing job %s: %v", w.BoxID, w.Job.SubmissionData.SubmissionID, err)
 		return err
@@ -77,8 +106,8 @@ func (w *Worker) RunWorker(job *engine.Job) error {
 	return nil
 }
 
-func (w *Worker) PreExecute() error {
-	problemData, err := w.Engine.Cache.GetOrLoad(w.Job.SubmissionData.ProblemID)
+func (w *Worker) PreExecute(ctx context.Context) error {
+	problemData, err := w.Engine.Cache.GetOrLoad(ctx, w.Job.SubmissionData.ProblemID)
 	if err != nil {
 		return fmt.Errorf("Failed to get or load problem data: %v", err)
 	}
@@ -87,7 +116,7 @@ func (w *Worker) PreExecute() error {
 	return nil
 }
 
-func (w *Worker) PostExecute(results []engine.Result) error {
+func (w *Worker) PostExecute(ctx context.Context, results []engine.Result) error {
 	status := results[len(results)-1].Status
 	maxTime := int64(0)
 	maxMemory := int64(0)
@@ -107,11 +136,12 @@ func (w *Worker) PostExecute(results []engine.Result) error {
 		Results:      results,
 	}
 
-	w.Engine.DbClient.UpdateSubmission(*w.Job.Verdict)
+	w.Engine.DbClient.UpdateSubmission(ctx, *w.Job.Verdict)
 
 	return nil
 }
 
+//todo use ctx
 func (w *Worker) ExecuteWorker() []engine.Result {
 	checkerBin, compileResult := w.CompileCheckerCode()
 	if checkerBin == nil {

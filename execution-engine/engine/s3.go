@@ -21,13 +21,16 @@ type S3Client struct {
 	bucketName string
 }
 
-func NewS3Client(bucketName string, region string) (*S3Client, error) {
+func NewS3Client(bucketName string, region string, s3Endpoint string, s3ForcePathStyle bool) (*S3Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("Unable to load AWS SDK config: %w", err)
 	}
 
-	s3Client := s3.NewFromConfig(cfg)
+	 s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(s3Endpoint)
+		o.UsePathStyle = s3ForcePathStyle
+	})
 
 	downloader := transfermanager.New(s3Client, func(d *transfermanager.Options) {
 		d.PartSizeBytes = 10* 1024 * 1024 //10mb
@@ -41,7 +44,7 @@ func NewS3Client(bucketName string, region string) (*S3Client, error) {
 	}, nil
 }
 
-func (s *S3Client) DownloadZip(s3Key string, destinationFolder string) error {
+func (s *S3Client) DownloadZip(ctx context.Context, s3Key string, destinationFolder string) error {
 	os.MkdirAll(destinationFolder, 0644)
 
 	tmpFilePath := filepath.Join(destinationFolder, "temp.zip")
@@ -52,7 +55,7 @@ func (s *S3Client) DownloadZip(s3Key string, destinationFolder string) error {
 
 	defer file.Close()
 
-	_, err = s.downloader.DownloadObject(context.Background(), &transfermanager.DownloadObjectInput{
+	_, err = s.downloader.DownloadObject(ctx, &transfermanager.DownloadObjectInput{
 		Bucket:   aws.String(s.bucketName),
 		Key:      aws.String(s3Key),
 		WriterAt: file,

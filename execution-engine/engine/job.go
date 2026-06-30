@@ -48,6 +48,10 @@ type Job struct {
 	SubmissionData *SubmissionData
 	ProblemData    *ProblemData
 	Verdict        *Verdict
+
+	//RabbitMQ ack callbacks
+	Ack  func() error
+	Nack func(requeue bool) error
 }
 
 func ParseSubmissionData(payload []byte) (SubmissionData, error) {

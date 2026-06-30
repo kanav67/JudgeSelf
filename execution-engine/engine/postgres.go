@@ -13,7 +13,7 @@ type PostgresClient struct {
 	submissionTable string
 }
 
-func New(dsn, problemTable, submissionTable string) (*PostgresClient, error) {
+func NewPostgresClient(dsn string) (*PostgresClient, error) {
 	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, err
@@ -22,6 +22,10 @@ func New(dsn, problemTable, submissionTable string) (*PostgresClient, error) {
 		pool.Close()
 		return nil, err
 	}
+	
+	problemTable := "problems"
+	submissionTable := "submissions"
+
 	return &PostgresClient{pool: pool, problemTable: problemTable, submissionTable: submissionTable}, nil
 }
 
@@ -29,7 +33,7 @@ func (r *PostgresClient) Close() {
 	r.pool.Close()
 }
 
-func (r *PostgresClient) GetProblemData(problemID string) (ProblemData, error) {
+func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (ProblemData, error) {
 	query := fmt.Sprintf(`
 	SELECT 
 	problem_id,
@@ -42,7 +46,7 @@ func (r *PostgresClient) GetProblemData(problemID string) (ProblemData, error) {
 	FROM %s WHERE id = $1`, r.problemTable)
 
 	var data ProblemData
-	err := r.pool.QueryRow(context.Background(), query, problemID).Scan(
+	err := r.pool.QueryRow(ctx, query, problemID).Scan(
 		&data.ProblemID,
 		&data.ProblemVersion,
 		&data.TimeLimit,
@@ -59,12 +63,12 @@ func (r *PostgresClient) GetProblemData(problemID string) (ProblemData, error) {
 	return data, nil
 }
 
-func (r *PostgresClient) UpdateSubmission(verdict Verdict) error {
+func (r *PostgresClient) UpdateSubmission(ctx context.Context, verdict Verdict) error {
 	query := fmt.Sprintf(`UPDATE %s SET status = $1, time = $2, memory = $3, results = $4, updated_at = NOW() WHERE id = $5`, r.submissionTable)
 	jsonData, err := json.Marshal(verdict.Results)
 	if err != nil {
 		return err
 	}
-	_, err = r.pool.Exec(context.Background(), query, verdict.Status, verdict.Time, verdict.Memory, string(jsonData), verdict.SubmissionID)
+	_, err = r.pool.Exec(ctx, query, verdict.Status, verdict.Time, verdict.Memory, string(jsonData), verdict.SubmissionID)
 	return err
 }
