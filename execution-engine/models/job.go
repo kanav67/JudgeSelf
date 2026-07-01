@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"path/filepath"
 	"strconv"
 )
@@ -59,6 +60,7 @@ func ParseSubmissionData(payload []byte) (SubmissionData, error) {
 	if err := json.Unmarshal(payload, &data); err != nil {
 		return SubmissionData{}, err
 	}
+	log.Printf("Parsed submission data: %+v", data)
 	return data, nil
 }
 

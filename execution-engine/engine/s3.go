@@ -84,7 +84,8 @@ func Unzip(zipFilePath, destinationFolder string) error {
 	}
 	defer reader.Close()
 
-	if err := os.MkdirAll(destinationFolder, 0644); err != nil {
+	//remember always give directories 755
+	if err := os.MkdirAll(destinationFolder, 0755); err != nil {
 		return err
 	}
 
@@ -99,7 +100,7 @@ func Unzip(zipFilePath, destinationFolder string) error {
 			continue
 		}
 
-		if err := os.MkdirAll(filepath.Dir(path), 0644); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 			return err
 		}
 

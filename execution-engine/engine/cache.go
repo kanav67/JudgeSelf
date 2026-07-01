@@ -4,6 +4,7 @@ import (
 	"context"
 	"execution-engine/models"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -48,6 +49,7 @@ func (c *Cache) GetOrLoad(ctx context.Context, problemID string) (models.Problem
 	if err != nil {
 		return models.ProblemData{}, err
 	}
+	log.Printf("Successfully loaded problem %s version %s from S3 to %s", problemData.ProblemID, problemData.ProblemVersion, localProblemCachePath)
 	problemData.LocalProblemDir = localProblemCachePath
 
 	return problemData, nil
@@ -73,16 +75,19 @@ func (c *DbCache) GetOrLoad(ctx context.Context, problemId string) (models.Probl
 		return item.data, nil
 	}
 
+	log.Printf("Loading problem %s from database", problemId)
 	problemData, err := c.DbClient.GetProblemData(ctx, problemId)
 	if err != nil {
 		return models.ProblemData{}, fmt.Errorf("Failed to get problem data from database: %v", err)
 	}
 
+	log.Printf("Successfully loaded problem %s from database", problemId)
+
 	c.store[problemId] = cacheDbItem{
 		data:      problemData,
 		expiresAt: time.Now().Add(c.ttl),
 	}
-	return item.data, nil
+	return problemData, nil
 }
 
 func (c *S3Cache) GetOrLoad(ctx context.Context, problemData models.ProblemData) (string, error) {
@@ -105,6 +110,7 @@ func (c *S3Cache) GetOrLoad(ctx context.Context, problemData models.ProblemData)
 	}
 
 	localProblemCachePath := "/tmp/execution-engine/problems/" + key
+	log.Printf("Downloading problem %s version %s from S3 to %s", problemData.ProblemID, problemData.ProblemVersion, problemData.S3Hash)
 	err := c.S3Client.DownloadZip(ctx, problemData.S3Hash, localProblemCachePath)
 	if err != nil {
 		return "", fmt.Errorf("Failed to download problem zip from S3: %v", err)
@@ -112,5 +118,5 @@ func (c *S3Cache) GetOrLoad(ctx context.Context, problemData models.ProblemData)
 
 	c.store[key] = localProblemCachePath
 
-	return item, nil
+	return localProblemCachePath, nil
 }

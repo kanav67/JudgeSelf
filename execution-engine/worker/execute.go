@@ -3,6 +3,7 @@ package worker
 import (
 	"execution-engine/models"
 	"execution-engine/sandbox"
+	"log"
 	"path/filepath"
 )
 
@@ -45,11 +46,13 @@ func (w *Worker) ExecuteChecker(checkerBin []byte, testInputPath, testOutputPath
 
 	result := w.Sandbox.ExecuteCode(checkerBin, checkerLanguage, "", "", "", []string{destInputPath, destOutputPath, destAnswerPath}, checkerExecuteConfig)
 
+	log.Printf("[Worker %d] Checker execution result: %+v", w.BoxID, result)
+
 	if result.IsolateMetadata == nil {
 		return FormatResult(result, "INT")
 	}
 
-	status, message := FormatIsolateMetadata(result.IsolateMetadata, false)
+	status, message := FormatIsolateMetadata(result.IsolateMetadata, true)
 	if status == "INT" {
 		result.Message = "Checker Execution failed, (Internal error by sandbox) \n" + IsolateMetadataToString(result.IsolateMetadata)
 		return FormatResult(result, "INT")
@@ -61,8 +64,10 @@ func (w *Worker) ExecuteChecker(checkerBin []byte, testInputPath, testOutputPath
 		return FormatResult(result, "FAIL")
 	}
 
+	log.Printf("[Worker %d] Checker verdict: %s, message: %s and isolate metadata: %v", w.BoxID, status, result.Message, result.IsolateMetadata)
+
 	finalResult := FormatResult(result, status)
-	finalResult.Message = result.Stdout
+	finalResult.Message = "Error: \n" + result.Stderr + "\nStdout: \n" + result.Message
 
 	return finalResult
 }

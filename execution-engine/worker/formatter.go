@@ -27,7 +27,7 @@ func FormatIsolateMetadata(metadata *sandbox.IsolateMetadata, isChecker bool) (s
 		}
 	case "RE":
 		if isChecker {
-			switch metadata.ExitSig {
+			switch metadata.ExitCode {
 			case 1, 2:
 				return "WA", "Wrong Answer"
 			case 3:
@@ -68,7 +68,7 @@ func FormatResult(result *sandbox.Result, status string) models.Result {
 		Status:        status,
 		Message:       result.Message,
 		InputSnippet:  result.Stdin,
-		OutputSnippet: result.Stdout + "\n Stderr: \n" + result.Stderr,
+		OutputSnippet: result.Stdout,
 		AnswerSnippet: "",
 	}
 }

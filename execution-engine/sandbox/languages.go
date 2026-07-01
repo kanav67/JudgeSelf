@@ -9,27 +9,28 @@ import (
 
 type languageSource struct {
 	Aliases []string `json:"aliases"`
-	Compile string   `json:"compile"`
-	Execute string   `json:"execute"`
+	Compile []string `json:"compile"`
+	Execute []string `json:"execute"`
 }
 
 type LanguageDetails struct {
-	Compile string
-	Execute string
+	Compile []string
+	Execute []string
 }
 
 // todo remove after testing is done
 var runtimeLanguageMap = map[string]LanguageDetails{
-	"python":  {Compile: "", Execute: "python3 {input}"},
-	"python3": {Compile: "", Execute: "python3 {input}"},
-	"py":      {Compile: "", Execute: "python3 {input}"},
-	"cpp":     {Compile: "g++ {input} -o {output}", Execute: "./{output}"},
-	"c++":     {Compile: "g++ {input} -o {output}", Execute: "./{output}"},
-	"g++":     {Compile: "g++ {input} -o {output}", Execute: "./{output}"},
+	"python":    {Compile: []string{""}, Execute: []string{"python3",  "{input}"}},
+	"python3":   {Compile: []string{""}, Execute: []string{"python3", "{input}"}},
+	"py":        {Compile: []string{""}, Execute: []string{"python3", "{input}"}},
+	"cpp":       {Compile: []string{"/usr/bin/g++", "-x", "c++", "{input}", "-o", "{output}"}, Execute: []string{"./{input}"}},
+	"cpp.g++17": {Compile: []string{"/usr/bin/g++", "-x", "c++", "{input}", "-o", "{output}"}, Execute: []string{"./{input}"}},
+	"c++":       {Compile: []string{"/usr/bin/g++", "{input}", "-o", "{output}"}, Execute: []string{"./{input}"}},
+	"g++":       {Compile: []string{"/usr/bin/g++", "{input}", "-o", "{output}"}, Execute: []string{"./{input}"}},
 }
 
 func init() {
-	content, err := os.ReadFile("users.json")
+	content, err := os.ReadFile("languages.json")
 	if err != nil {
 		log.Fatalf("Error reading languages file: %v", err)
 	}
@@ -55,20 +56,28 @@ func GetCommands(lang string) (LanguageDetails, bool) {
 	return config, exists
 }
 
-func GetCompileCommand(lang string, inputFile string, outputFile string) (string, bool) {
+func GetCompileCommand(lang string, inputFile string, outputFile string) ([]string, bool) {
 	config, exists := runtimeLanguageMap[strings.ToLower(strings.TrimSpace(lang))]
 	if !exists {
-		return "", false
+		return nil, false
 	}
-	tmp := strings.ReplaceAll(config.Compile, "{input}", inputFile)
-	tmp = strings.ReplaceAll(tmp, "{output}", outputFile)
-	return tmp, true
+	return replacePlaceholders(config.Compile, inputFile, outputFile), true
 }
 
-func GetExecuteCommand(lang string, inputFile string) (string, bool) {
+func GetExecuteCommand(lang string, inputFile string) ([]string, bool) {
 	config, exists := runtimeLanguageMap[strings.ToLower(strings.TrimSpace(lang))]
 	if !exists {
-		return "", false
+		return nil, false
 	}
-	return strings.ReplaceAll(config.Execute, "{input}", inputFile), true
+	return replacePlaceholders(config.Execute, inputFile, ""), true
+}
+
+func replacePlaceholders(command []string, inputFile string, outputFile string) []string {
+	replaced := make([]string, len(command))
+	for i, part := range command {
+		part = strings.ReplaceAll(part, "{input}", inputFile)
+		part = strings.ReplaceAll(part, "{output}", outputFile)
+		replaced[i] = part
+	}
+	return replaced
 }

@@ -3,6 +3,7 @@ package sandbox
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,11 +22,14 @@ func (s *Sandbox) CompileCode(sourceCode []byte, language, additionalFilesDir st
 		}
 	}
 
-	if compileCmd == "" {
+	log.Printf("Compiling code for language %s with command: %s", language, compileCmd)
+
+	if len(compileCmd) == 0 {
 		return sourceCode, &Result{}
 	}
 
 	sourcePath := filepath.Join(s.BoxDir, "source")
+	log.Printf("Writing source code to %s", sourcePath)
 	err := os.WriteFile(sourcePath, sourceCode, 0644)
 	if err != nil {
 		return nil, &Result{
@@ -44,11 +48,15 @@ func (s *Sandbox) CompileCode(sourceCode []byte, language, additionalFilesDir st
 		"-E", "HOME=/tmp",
 		"-E", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 		"-d", "/etc:noexec",
-		"--run", "--", compileCmd,
+		"-p",
+		"--run", "--",
 	)
+	args = append(args, compileCmd...)
 	args = append(args, additionalArgs...)
 
 	cmd := exec.Command("isolate", args...)
+	
+	log.Printf("Running command: %s", cmd.String())
 
 	//we can use buffers to capture stdout and stderr since compilation outputs are usually small
 	//maybe in future switch to files only

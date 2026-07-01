@@ -38,8 +38,8 @@ func (r *PostgresClient) Close() {
 func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (models.ProblemData, error) {
 	query := fmt.Sprintf(`
 	SELECT 
-	problem_id,
-	problem_version,
+	id,
+	polygon_version,
 	time_limit, 
 	memory_limit, 
 	test_count,

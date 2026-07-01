@@ -2,12 +2,16 @@ package worker
 
 import (
 	"execution-engine/models"
+	"log"
 	"os"
 )
 
 func (w *Worker) CompileCheckerCode() ([]byte, models.Result) {
 	checkerLanguage := w.Job.ProblemData.CheckerLanguage
 	checkerSource, _ := os.ReadFile(w.Job.ProblemData.GetCheckerSourcePath())
+
+	log.Printf("Compiling checker code with source from %s", w.Job.ProblemData.GetCheckerSourcePath())
+
 	checkerBin, result := w.Sandbox.CompileCode(
 		checkerSource,
 		checkerLanguage,

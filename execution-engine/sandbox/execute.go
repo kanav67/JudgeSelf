@@ -1,6 +1,7 @@
 package sandbox
 
 import (
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,11 +22,14 @@ func (s *Sandbox) ExecuteCode(sourceBin []byte, language, stdinFilePath, stdoutF
 		"-M", s.GetMetadataPath(),
 		"-E", "HOME=/tmp",
 		"-E", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-		"--run", "--", executeCmd,
+		"--run", "--",
 	)
+	args = append(args, executeCmd...)
 	args = append(args, additionalArgs...)
 
 	cmd := exec.Command("isolate", args...)
+
+	log.Printf("Executing cmd %s", cmd.String())
 
 	//initialize inputs
 	if stdinFilePath == "" {
@@ -42,6 +46,8 @@ func (s *Sandbox) ExecuteCode(sourceBin []byte, language, stdinFilePath, stdoutF
 	defer stdin.Close()
 	cmd.Stdin = stdin
 
+	//ensure dir exists
+	os.MkdirAll(filepath.Dir(stdoutFilePath), 0755)
 	stdout, _ := os.OpenFile(
 		stdoutFilePath,
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
@@ -50,6 +56,7 @@ func (s *Sandbox) ExecuteCode(sourceBin []byte, language, stdinFilePath, stdoutF
 	defer stdout.Close()
 	cmd.Stdout = stdout
 
+	os.MkdirAll(filepath.Dir(stderrFilePath), 0755)
 	stderr, _ := os.OpenFile(
 		stderrFilePath,
 		os.O_WRONLY|os.O_CREATE|os.O_TRUNC,

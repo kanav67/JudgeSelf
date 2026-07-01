@@ -25,6 +25,8 @@ func NewEngine() (*Engine, error) {
 	cfg := config.Load()
 	engine.Config = &cfg
 
+	engine.JobQueue = make(chan models.Job, cfg.WorkerCount)
+
 	dbClient, err := NewPostgresClient(cfg.PostgresDSN)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create dbClient: %v", err)

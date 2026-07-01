@@ -79,8 +79,21 @@ func (ic *IsolateConfig) toArgs() []string {
 	args = append(args, "-t", fmt.Sprintf("%.2f", ic.TimeLimit))
 	args = append(args, "-w", fmt.Sprintf("%.2f", ic.WallTimeLimit))
 	args = append(args, "-E", fmt.Sprintf("%.2f", ic.ExtraTimeLimit))
-	args = append(args, "-s", fmt.Sprintf("%d", ic.Stack))
+	args = append(args, "-k", fmt.Sprintf("%d", ic.Stack))
 	args = append(args, "-f", fmt.Sprintf("%d", ic.FileSizeLimit))
+
+	if ic.DirMounts != nil {
+		for _, mount := range ic.DirMounts {
+			mountArg := fmt.Sprintf("--dir=%s=%s", mount.Destination, mount.Source)
+			if mount.Writable {
+				mountArg += ":rw"
+			}
+			if mount.NoExecute {
+				mountArg += ":noexec"
+			}
+			args = append(args, mountArg)
+		}
+	}
 
 	return args
 }

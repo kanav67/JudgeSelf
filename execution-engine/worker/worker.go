@@ -40,11 +40,6 @@ func NewWorker(engine *engine.Engine, boxID int) (*Worker, error) {
 	}
 	w.Sandbox = sandbox
 
-	err = os.MkdirAll(w.LocalDir, 0755)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create destination directory: %w", err)
-	}
-
 	return w, nil
 }
 
@@ -64,8 +59,11 @@ func (w *Worker) Start(ctx context.Context, jobQueue <-chan models.Job) {
 
 		case job, ok := <-jobQueue:
 			if !ok {
+				log.Printf("[Worker %d] Job queue closed", w.BoxID)
 				return //Channel closed
 			}
+			log.Printf("[Worker %d] Received job: %s", w.BoxID, job.SubmissionData.SubmissionID)
+
 			err := w.RunWorker(ctx, &job)
 
 			if err != nil {
@@ -75,12 +73,19 @@ func (w *Worker) Start(ctx context.Context, jobQueue <-chan models.Job) {
 				log.Printf("[Worker %d] Successfully finished %s", w.BoxID, job.SubmissionData.SubmissionID)
 				_ = job.Ack()
 			}
+
+			log.Printf("[Worker %d] Job verdict: %+v", w.BoxID, job.Verdict)
 		}
 	}
 }
 
 func (w *Worker) RunWorker(ctx context.Context, job *models.Job) error {
 	w.LocalDir = filepath.Join(LocalTemp, job.SubmissionData.SubmissionID)
+	err := os.MkdirAll(w.LocalDir, 0755)
+	if err != nil {
+		return fmt.Errorf("Failed to create localDir directory: %w", err)
+	}
+
 	w.Job = job
 
 	w.Sandbox.ReInitialize()
@@ -88,9 +93,9 @@ func (w *Worker) RunWorker(ctx context.Context, job *models.Job) error {
 	results := []models.Result{}
 
 	//errors relating to downloading problem data
-	err := w.PreExecute(ctx)
+	err = w.PreExecute(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "PreExecute failed on worker %d while executing job %s: %v", w.BoxID, w.Job.SubmissionData.SubmissionID, err)
+		fmt.Fprintf(os.Stderr, "PreExecute failed on worker %d while executing job %s: \n", w.BoxID, w.Job.SubmissionData.SubmissionID)
 		return err
 	}
 
@@ -122,8 +127,8 @@ func (w *Worker) PostExecute(ctx context.Context, results []models.Result) error
 	maxTime := int64(0)
 	maxMemory := int64(0)
 	for _, result := range results {
-		if int64(result.Time) > maxTime {
-			maxTime = int64(result.Time)
+		if int64(result.Time * 1000) > maxTime {
+			maxTime = int64(result.Time*1000)
 		}
 		if int64(result.Memory) > maxMemory {
 			maxMemory = int64(result.Memory)
@@ -203,6 +208,10 @@ func (w *Worker) ExecuteWorker() []models.Result {
 			AnswerSnippet: answerSnippet,
 		}
 		results = append(results, finalTestResult)
+
+		if checkerResult.Status == "WA" {
+			return results
+		}
 	}
 
 	return results

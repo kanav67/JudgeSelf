@@ -40,14 +40,14 @@ func Load() Config {
 
 	return Config{
 		S3Endpoint:       env("S3_ENDPOINT", "http://localhost:9000"),
-		S3BucketName:     env("S3_BUCKET_NAME", "problem-service"),
+		S3BucketName:     env("S3_BUCKET_NAME", "problem-service-artifacts"),
 		S3Region:         env("S3_REGION", "us-east-1"),
 		S3ForcePathStyle: boolEnv("S3_FORCE_PATH_STYLE", true),
 		WorkerCount:      intEnv("WORKER_COUNT", runtime.NumCPU()),
-		PostgresDSN:      env("POSTGRES_DSN", "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable"),
-		RabbitURL:        env("RABBITMQ_URL", "amqp://guest:guest@rabbitmq:5672/"),
+		PostgresDSN:      env("POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"),
+		RabbitURL:        env("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
 		RabbitQueue:      env("RABBITMQ_QUEUE", "submissions"),
-		RedisAddr:        env("REDIS_ADDR", "redis:6379"),
+		RedisAddr:        env("REDIS_ADDR", "redis://localhost:6379"),
 		RedisPassword:    env("REDIS_PASSWORD", ""),
 		RedisDB:          intEnv("REDIS_DB", 0),
 		CacheDir:         env("CACHE_DIR", "/tmp/execution-engine/"),
