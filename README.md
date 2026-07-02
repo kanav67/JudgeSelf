@@ -7,9 +7,10 @@ The project is meant to be a high-performance, self-hostable competitive program
 Designed from the ground up for massive concurrency, the primary goal of this architecture is to gracefully handle coordinated traffic spikes of **10,000 to 15,000 concurrent participants** submitting code simultaneously, without starving database connections or locking up the user interface.
 
 ## 🏗️ Architecture & Design Decisions
+<img width="80%" alt="judgeself drawio (1)" src="https://github.com/user-attachments/assets/3208b01e-a539-4fb9-9231-8dc42b969c1d" />
+  
 
 Here is the summary of the architecture and some design choices for this stack:
-
 * **Frontend (Next.js):** Chosen for its robust caching mechanisms and Server-Side Rendering (SSR).
 * **Main API (Express.js):** Handles core CRUD operations, user authentication, and contest management. Express was chosen for its simplicity and widespread adoption.
 * **Problem Service (Express.js):** A service bridging the platform with Codeforces Polygon. It is responsible for pulling problem packages via API, compiling test cases (if needed), zipping and uploading problem data to PostgreSQL and S3.
