@@ -59,6 +59,10 @@ func (p *RabbitMQPublisher) PublishSubmission(msg QueueMessage) error {
 		return err
 	}
 
+	if p.channel.IsClosed() {
+		return fmt.Errorf("Channel is closed")
+	}
+
 	confirm, err := p.channel.PublishWithDeferredConfirmWithContext(context.Background(),
 		"",      // exchange
 		p.queue, // routing key

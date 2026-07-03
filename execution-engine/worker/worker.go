@@ -142,7 +142,10 @@ func (w *Worker) PostExecute(ctx context.Context, results []models.Result) error
 		Results:      results,
 	}
 
-	w.Engine.DbClient.UpdateSubmission(ctx, *w.Job.Verdict)
+	err := w.Engine.DbClient.UpdateSubmission(ctx, *w.Job.Verdict)
+	if err != nil {
+		return fmt.Errorf("Failed to update submission in database: %v", err)
+	}
 
 	return nil
 }

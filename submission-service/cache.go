@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+//todo move to config
+const CacheCleanupThreshold = 30 //minimum number of cache items before cleanup can be triggered
+const CacheCleanupInterval = 15 * time.Minute //time interval after which cache items are checked for expiration
+
 type cacheItem struct {
 	data      ProblemData
 	expiresAt time.Time
@@ -21,7 +25,17 @@ type Cache struct {
 }
 
 func NewCache(DbClient *PostgresClient) *Cache {
-	return &Cache{store: make(map[string]cacheItem), ttl: 5 * time.Minute, DbClient: DbClient}
+	c := &Cache{store: make(map[string]cacheItem), ttl: 5 * time.Minute, DbClient: DbClient}
+
+	go func() {
+		ticker := time.NewTicker(CacheCleanupInterval)
+		defer ticker.Stop()
+		for range ticker.C {
+			cleanCache(c)
+		}
+	}()
+
+	return c
 }
 
 func (c *Cache) GetOrLoad(ctx context.Context, problemId string) (ProblemData, error) {
@@ -57,4 +71,23 @@ func (c *Cache) GetOrLoad(ctx context.Context, problemId string) (ProblemData, e
 		expiresAt: time.Now().Add(c.ttl),
 	}
 	return problemData, nil
+}
+
+func cleanCache(c *Cache) {
+	now := time.Now()
+
+	if len(c.store) <= CacheCleanupThreshold {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	cnt := 0
+	for k, v := range c.store {
+		if now.After(v.expiresAt) {
+			delete(c.store, k)
+			cnt++
+		}
+	}
+	log.Printf("Cleaned up %d stale cache items.", cnt)
 }

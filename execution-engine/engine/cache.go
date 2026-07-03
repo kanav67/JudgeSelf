@@ -5,10 +5,19 @@ import (
 	"execution-engine/models"
 	"fmt"
 	"log"
+	"os"
+	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
+
+// todo move to config
+const CacheCleanupThreshold = 30              //minimum number of cache items before cleanup can be triggered
+const CacheCleanupInterval = 15 * time.Minute //time interval after which cache items are checked for expiration
+const CacheCleanupBuffer = 5 * time.Minute    //an extra buffer time to ensure that cache items are not deleted while in use
+const TmpDir = "/tmp/execution-engine/problems/"
 
 type cacheDbItem struct {
 	data      models.ProblemData
@@ -34,10 +43,81 @@ type Cache struct {
 }
 
 func NewCache(DbClient *PostgresClient, S3Client *S3Client) *Cache {
-	return &Cache{
-		DbCache:  &DbCache{store: make(map[string]cacheDbItem), ttl: 5 * time.Minute, DbClient: DbClient},
-		S3Cache:  &S3Cache{store: make(map[string]string), S3Client: S3Client},
+	c := &Cache{
+		DbCache: &DbCache{store: make(map[string]cacheDbItem), ttl: 5 * time.Minute, DbClient: DbClient},
+		S3Cache: &S3Cache{store: make(map[string]string), S3Client: S3Client},
 	}
+
+	initCleanup()
+
+	go func() {
+		ticker := time.NewTicker(CacheCleanupInterval)
+		defer ticker.Stop()
+		for range ticker.C {
+			cleanCache(c)
+		}
+	}()
+
+	return c
+}
+
+func initCleanup() {
+	os.RemoveAll(TmpDir)
+	os.MkdirAll(TmpDir, 0755)
+}
+
+//this implements quite a complex logic
+//so 1st it runs on periodic basis and checks if the number of items in the S3 cache (since it is the largest) is greater than the threshold
+//If it is, it will check the DbCache for expired items and remove them from the DbCache
+//Then it will check the S3Cache for items that are either not present in the DbCache or are older versions of the items present in the DbCache and remove them from the S3Cache
+//Now as a precaution before removing items from db cache we add a buffer time of 5 minutes to ensure the cache is freed by any running processes before it is removed from the cache
+//in case some new process starts using the cache item, the db cache will be refreshed and hence s3 cache will not be removed in next cleanup
+func cleanCache(c *Cache) {
+	now := time.Now()
+
+	if len(c.S3Cache.store) <= CacheCleanupThreshold {
+		return
+	}
+
+	c.DbCache.mu.Lock()
+	c.S3Cache.mu.Lock()
+	defer c.DbCache.mu.Unlock()
+	defer c.S3Cache.mu.Unlock()
+
+	cnt := 0
+	var validKeys []string
+	for k, v := range c.DbCache.store {
+		if now.After(v.expiresAt.Add(CacheCleanupBuffer)) {
+			delete(c.DbCache.store, k)
+		} else {
+			validKeys = append(validKeys, k)
+		}
+	}
+
+	latestS3Keys := map[string]int{}
+	for k := range c.S3Cache.store {
+		key := strings.Split(k, "_")[0]
+		version, _ := strconv.Atoi(strings.Split(k, "_")[1])
+
+		item, exists := latestS3Keys[key]
+		if !exists || item < version {
+			latestS3Keys[key] = version
+		}
+	}
+
+	for k, v := range c.S3Cache.store {
+		key := strings.Split(k, "_")[0]
+		version, _ := strconv.Atoi(strings.Split(k, "_")[1])
+
+		//delete if not present in the dbcache or is an older versions 
+		if !slices.Contains(validKeys, key) || version < latestS3Keys[key] {
+			delete(c.S3Cache.store, k)
+			os.RemoveAll(v)
+			cnt++
+		}
+	}
+
+	log.Printf("Cleaned up %d stale cache items.", cnt)
 }
 
 func (c *Cache) GetOrLoad(ctx context.Context, problemID string) (models.ProblemData, error) {
@@ -100,16 +180,16 @@ func (c *S3Cache) GetOrLoad(ctx context.Context, problemData models.ProblemData)
 	if exists {
 		return item, nil
 	}
-	
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	item, exists = c.store[key]
 	if exists {
 		return item, nil
 	}
 
-	localProblemCachePath := "/tmp/execution-engine/problems/" + key
+	localProblemCachePath := TmpDir + key
 	log.Printf("Downloading problem %s version %s from S3 to %s", problemData.ProblemID, problemData.ProblemVersion, problemData.S3Hash)
 	err := c.S3Client.DownloadZip(ctx, problemData.S3Hash, localProblemCachePath)
 	if err != nil {

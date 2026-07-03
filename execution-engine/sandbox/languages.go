@@ -18,16 +18,7 @@ type LanguageDetails struct {
 	Execute []string
 }
 
-// todo remove after testing is done
-var runtimeLanguageMap = map[string]LanguageDetails{
-	"python":    {Compile: []string{""}, Execute: []string{"python3",  "{input}"}},
-	"python3":   {Compile: []string{""}, Execute: []string{"python3", "{input}"}},
-	"py":        {Compile: []string{""}, Execute: []string{"python3", "{input}"}},
-	"cpp":       {Compile: []string{"/usr/bin/g++", "-x", "c++", "{input}", "-o", "{output}"}, Execute: []string{"./{input}"}},
-	"cpp.g++17": {Compile: []string{"/usr/bin/g++", "-x", "c++", "{input}", "-o", "{output}"}, Execute: []string{"./{input}"}},
-	"c++":       {Compile: []string{"/usr/bin/g++", "{input}", "-o", "{output}"}, Execute: []string{"./{input}"}},
-	"g++":       {Compile: []string{"/usr/bin/g++", "{input}", "-o", "{output}"}, Execute: []string{"./{input}"}},
-}
+var runtimeLanguageMap = map[string]LanguageDetails{}
 
 func init() {
 	content, err := os.ReadFile("languages.json")
