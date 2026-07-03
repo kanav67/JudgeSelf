@@ -1,0 +1,17 @@
+[
+    {
+        "Aliases": ["python", "python3", "py"],
+        "Compile": [],
+        "Execute": ["python3", "{input}"]
+    },
+    {
+        "Aliases": ["cpp", "cpp.g++17", "c++", "g++"],
+        "Compile": ["/usr/bin/g++", "-x", "c++", "{input}", "-o", "{output}"],
+        "Execute": ["./{input}"]
+    },
+    {
+        "Aliases": ["java", "javac"],
+        "Compile": ["/usr/bin/javac", "{input}"],
+        "Execute": ["java", "{input}"]
+    }
+]

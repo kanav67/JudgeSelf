@@ -30,3 +30,23 @@ CREATE TABLE IF NOT EXISTS problems (
 );
 
 CREATE INDEX IF NOT EXISTS problems_polygon_id_idx ON problems (polygon_id);
+
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS submissions (
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  problem_id UUID NOT NULL REFERENCES problems(id),
+  user_id UUID NOT NULL REFERENCES users(id),
+  code TEXT NOT NULL,
+  language TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'queue',
+  time BIGINT,
+  memory BIGINT,
+  results JSONB, -- JSONB will help in indexing in future 
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
