@@ -1,6 +1,9 @@
 CREATE TABLE IF NOT EXISTS problems (
   id UUID PRIMARY KEY,
-  polygon_id TEXT NOT NULL,
+  contest_id INT NOT NULL REFERENCES contests(id),
+  problem_index TEXT, -- can be null, indicating it is deleted
+
+  polygon_id TEXT NOT NULL, -- polygon url
   polygon_version INT NOT NULL,
 
   name TEXT NOT NULL,
@@ -50,3 +53,18 @@ CREATE TABLE IF NOT EXISTS submissions (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS contests (
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name TEXT NOT NULL,
+  owner_id UUID NOT NULL REFERENCES users(id),
+  start_time TIMESTAMPTZ NOT NULL,
+  end_time TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ensures for non NULL problem_index, the combination of contest_id and problem_index is unique
+CREATE UNIQUE INDEX unique_contestid_problem_index 
+ON problems (contest_id, problem_index) 
+WHERE problem_index IS NOT NULL;
