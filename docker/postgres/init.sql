@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS problems (
   id UUID PRIMARY KEY,
   contest_id INT NOT NULL REFERENCES contests(id),
   problem_index TEXT, -- can be null, indicating it is deleted
+  type TEXT NOT NULL, -- can be "PRACTICE" or "RATED"
 
   polygon_id TEXT NOT NULL, -- polygon url
   polygon_version INT NOT NULL,

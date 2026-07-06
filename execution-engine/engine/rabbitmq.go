@@ -19,27 +19,27 @@ type RabbitMQConsumer struct {
 	queue string
 }
 
-func NewRabbitMQConsumer(url, queue string, prefetch int) (*RabbitMQConsumer, error) {
+func NewRabbitMQConsumer(url, queueName string, prefetch int) (*RabbitMQConsumer, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
 	}
 	ch, err := conn.Channel()
 	if err != nil {
-		_ = conn.Close()
+		conn.Close()
 		return nil, err
 	}
 	if err := ch.Qos(prefetch, 0, false); err != nil {
-		_ = ch.Close()
-		_ = conn.Close()
+		ch.Close()
+		conn.Close()
 		return nil, err
 	}
-	if _, err := ch.QueueDeclare(queue, true, false, false, false, nil); err != nil {
-		_ = ch.Close()
-		_ = conn.Close()
+	if _, err := ch.QueueDeclare(queueName, true, false, false, false, nil); err != nil {
+		ch.Close()
+		conn.Close()
 		return nil, err
 	}
-	return &RabbitMQConsumer{conn: conn, ch: ch, queue: queue}, nil
+	return &RabbitMQConsumer{conn: conn, ch: ch, queue: queueName}, nil
 }
 
 func (c *RabbitMQConsumer) Close() {

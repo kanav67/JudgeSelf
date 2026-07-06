@@ -8,12 +8,13 @@ import (
 )
 
 type Engine struct {
-	Config          *config.Config
-	DbClient        *PostgresClient
-	S3Client        *S3Client
-	Cache           *Cache
-	RabbitMQClient  *RabbitMQConsumer
-	ReddisPublisher *RedisPublisher
+	Config            *config.Config
+	DbClient          *PostgresClient
+	S3Client          *S3Client
+	Cache             *Cache
+	RabbitMQClient    *RabbitMQConsumer
+	RabbitMQPublisher *RabbitMQPublisher
+	ReddisPublisher   *RedisPublisher
 
 	JobQueue chan models.Job
 	Wg       sync.WaitGroup
@@ -50,10 +51,19 @@ func NewEngine() (*Engine, error) {
 	}
 	engine.RabbitMQClient = rabbitMQClient
 
+	rabbitMQPublisher, err := NewRabbitMQPublisher(cfg.RabbitURL, cfg.RabbitQueue)
+	if err != nil {
+		dbClient.Close()
+		rabbitMQClient.Close()
+		return nil, fmt.Errorf("Failed to create rabbitMQPublisher: %v", err)
+	}
+	engine.RabbitMQPublisher = rabbitMQPublisher
+
 	redisPublisher, err := NewRedisPublisher(cfg.RedisAddr, cfg.StatusChannel)
 	if err != nil {
 		dbClient.Close()
 		rabbitMQClient.Close()
+		rabbitMQPublisher.Close()
 		return nil, fmt.Errorf("Failed to create redisPublisher: %v", err)
 	}
 	engine.ReddisPublisher = redisPublisher

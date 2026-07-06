@@ -13,6 +13,10 @@ type SubmissionData struct {
 	SourceCode     string `json:"source_code"`
 	SourceLanguage string `json:"language"`
 	ProblemID      string `json:"problem_id"`
+
+	//helps in publishing to leaderboard
+	Type   string `json:"type"` //can be "PRACTICE" or "RATED"
+	UserID string `json:"user_id"`
 }
 
 type ProblemData struct {
@@ -24,6 +28,10 @@ type ProblemData struct {
 	CheckerLanguage string
 	S3Hash          string
 	LocalProblemDir string
+
+	//needed for publishing to leaderboard
+	ContestID    string
+	ProblemIndex string
 }
 
 type Verdict struct {

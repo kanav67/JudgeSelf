@@ -127,8 +127,8 @@ func (w *Worker) PostExecute(ctx context.Context, results []models.Result) error
 	maxTime := int64(0)
 	maxMemory := int64(0)
 	for _, result := range results {
-		if int64(result.Time * 1000) > maxTime {
-			maxTime = int64(result.Time*1000)
+		if int64(result.Time*1000) > maxTime {
+			maxTime = int64(result.Time * 1000)
 		}
 		if int64(result.Memory) > maxMemory {
 			maxMemory = int64(result.Memory)
@@ -145,6 +145,17 @@ func (w *Worker) PostExecute(ctx context.Context, results []models.Result) error
 	err := w.Engine.DbClient.UpdateSubmission(ctx, *w.Job.Verdict)
 	if err != nil {
 		return fmt.Errorf("Failed to update submission in database: %v", err)
+	}
+
+	if w.Job.SubmissionData.Type == "RATED" {
+		//we don't care about the error here, if it fails leaderboard should auto regenerate
+		_ = w.Engine.RabbitMQPublisher.PublishSubmissionResult(ctx, engine.QueueMessage{
+			SubmissionID: w.Job.SubmissionData.SubmissionID,
+			UserId:       w.Job.SubmissionData.UserID,
+			Status:       status,
+			ContestID:    w.Job.ProblemData.ContestID,
+			ProblemIndex: w.Job.ProblemData.ProblemIndex,
+		})
 	}
 
 	return nil

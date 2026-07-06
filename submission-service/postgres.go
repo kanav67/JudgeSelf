@@ -11,6 +11,7 @@ type PostgresClient struct {
 	pool            *pgxpool.Pool
 	problemTable    string
 	submissionTable string
+	contestTable    string
 }
 
 func NewPostgresClient(dsn string) (*PostgresClient, error) {
@@ -22,11 +23,12 @@ func NewPostgresClient(dsn string) (*PostgresClient, error) {
 		pool.Close()
 		return nil, err
 	}
-	
+
 	problemTable := "problems"
 	submissionTable := "submissions"
+	contestTable := "contests"
 
-	return &PostgresClient{pool: pool, problemTable: problemTable, submissionTable: submissionTable}, nil
+	return &PostgresClient{pool, problemTable, submissionTable, contestTable}, nil
 }
 
 func (r *PostgresClient) Close() {
@@ -36,14 +38,20 @@ func (r *PostgresClient) Close() {
 func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (ProblemData, error) {
 	query := fmt.Sprintf(`
 	SELECT 
-	id,
-	polygon_version
-	FROM %s WHERE id = $1`, r.problemTable)
+	p.id,
+	p.polygon_version,
+	contest_id,
+	c.start_time,
+	c.end_time
+	FROM %s p JOIN %s c USING (contest_id) WHERE p.id = $1`, r.problemTable, r.contestTable)
 
 	var data ProblemData
 	err := r.pool.QueryRow(ctx, query, problemID).Scan(
 		&data.ProblemID,
 		&data.ProblemVersion,
+		&data.ContestInfo.ContestID,
+		&data.ContestInfo.StartTime,
+		&data.ContestInfo.EndTime,
 	)
 
 	if err != nil {
@@ -55,7 +63,7 @@ func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (
 
 func (r *PostgresClient) CreateSubmission(ctx context.Context, req SubmissionRequest) (string, error) {
 	query := fmt.Sprintf(`INSERT INTO %s (problem_id, language, code, user_id, updated_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id`, r.submissionTable)
-	
+
 	var submissionID string
 	err := r.pool.QueryRow(ctx, query, req.ProblemID, req.Language, req.Code, req.UserID).Scan(&submissionID)
 	if err != nil {

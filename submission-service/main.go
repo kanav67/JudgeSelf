@@ -5,13 +5,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 )
 
+type ContestData struct {
+	ContestID string
+	StartTime time.Time
+	EndTime   time.Time
+}
+
 type ProblemData struct {
 	ProblemID      string `json:"problem_id"`
 	ProblemVersion int    `json:"problem_version"`
+	ContestInfo    ContestData
 }
 
 type SubmissionRequest struct {
@@ -19,6 +27,7 @@ type SubmissionRequest struct {
 	Language  string `json:"language"`
 	Code      string `json:"code"`
 	UserID    string
+	Type      string
 }
 
 type SubmissionResponse struct {
@@ -32,6 +41,7 @@ type QueueMessage struct {
 	Language       string `json:"language"`
 	ProblemID      string `json:"problem_id"`
 	ProblemVersion int    //future
+	Type           string `json:"type"`
 }
 
 type App struct {
@@ -50,7 +60,7 @@ func main() {
 	}
 	defer db.Close()
 
-	rmq, err := InitRabbitMQ(cfg.RabbitURL, cfg.RabbitQueue)
+	rmq, err := NewRabbitMQPublisher(cfg.RabbitURL, cfg.RabbitQueue)
 	if err != nil {
 		log.Fatalf("RabbitMQ connection failed: %v", err)
 	}
@@ -81,7 +91,7 @@ func LoadLanguages() []string {
 	if err != nil {
 		log.Fatalf("Error parsing languages JSON: %v", err)
 	}
-	
+
 	log.Printf("Total %d languages loaded", len(rawLanguages))
 
 	var languages []string
@@ -125,6 +135,12 @@ func (app *App) HandleSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if time.Now().Before(problemData.ContestInfo.StartTime) || time.Now().After(problemData.ContestInfo.EndTime) {
+		req.Type = "PRACTICE"
+	} else {
+		req.Type = "RATED"
+	}
+
 	subID, err := app.DB.CreateSubmission(ctx, req)
 	if err != nil {
 		log.Printf("Failed to insert submission: %v", err)
@@ -138,6 +154,7 @@ func (app *App) HandleSubmit(w http.ResponseWriter, r *http.Request) {
 		Language:       req.Language,
 		Code:           req.Code,
 		ProblemVersion: problemData.ProblemVersion,
+		Type:           req.Type,
 	}
 
 	if err := app.RabbitMQPublisher.PublishSubmission(msg); err != nil {

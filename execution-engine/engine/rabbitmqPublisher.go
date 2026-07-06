@@ -1,10 +1,9 @@
-package main
+package engine
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -13,6 +12,14 @@ type RabbitMQPublisher struct {
 	conn    *amqp.Connection
 	channel *amqp.Channel
 	queue   string
+}
+
+type QueueMessage struct {
+	SubmissionID string `json:"submission_id"`
+	Status       string `json:"status"`
+	UserId       string `json:"user_id"`
+	ContestID    string `json:"contest_id"`
+	ProblemIndex string `json:"problem_index"`
 }
 
 func NewRabbitMQPublisher(url, queueName string) (*RabbitMQPublisher, error) {
@@ -26,14 +33,6 @@ func NewRabbitMQPublisher(url, queueName string) (*RabbitMQPublisher, error) {
 		conn.Close()
 		return nil, err
 	}
-
-	err = ch.Confirm(false)
-	if err != nil {
-		conn.Close()
-		ch.Close()
-		return nil, err
-	}
-
 	_, err = ch.QueueDeclare(queueName, true, false, false, false, nil)
 	if err != nil {
 		conn.Close()
@@ -48,9 +47,8 @@ func NewRabbitMQPublisher(url, queueName string) (*RabbitMQPublisher, error) {
 	}, nil
 }
 
-// this handles upto 500-1000 msgs/sec which is enough for our use case
-// incase more throughput is needed you may use async publishing tho scaling would be a better choice in that case
-func (p *RabbitMQPublisher) PublishSubmission(msg QueueMessage) error {
+// we don't need it to be guaranteed
+func (p *RabbitMQPublisher) PublishSubmissionResult(ctx context.Context, msg QueueMessage) error {
 	body, err := json.Marshal(msg)
 	if err != nil {
 		return err
@@ -60,7 +58,7 @@ func (p *RabbitMQPublisher) PublishSubmission(msg QueueMessage) error {
 		return fmt.Errorf("Channel is closed")
 	}
 
-	confirm, err := p.channel.PublishWithDeferredConfirmWithContext(context.Background(),
+	err = p.channel.PublishWithContext(ctx,
 		"",      // exchange
 		p.queue, // routing key
 		false,   // mandatory
@@ -71,15 +69,8 @@ func (p *RabbitMQPublisher) PublishSubmission(msg QueueMessage) error {
 			Body:         body,
 		})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	acked, err := confirm.WaitContext(ctx)
-	cancel()
-
 	if err != nil {
 		return fmt.Errorf("Confirmation wait failed: %v", err)
-	}
-	if !acked {
-		return fmt.Errorf("Message %d was nacked by the broker", confirm.DeliveryTag)
 	}
 
 	return nil
