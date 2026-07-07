@@ -52,12 +52,17 @@ const problemQuery =
 
     FROM problems`
 
-export const getProblemById = async (problemId: string) => {
+const getProblemById = async (problemId: string) => {
   const { rows } = await pool.query(problemQuery + ' WHERE id = $1::uuid', [problemId]);
   return rows[0] ?? null;
 };
 
-export const getProblemByContestIdAndIndex = async (contestId: string, problemIndex: string) => {
+const getProblemByContestIdAndIndex = async (contestId: string, problemIndex: string) => {
   const { rows } = await pool.query(problemQuery + ' WHERE contest_id = $1::uuid AND problem_index = $2', [contestId, problemIndex]);
   return rows[0] ?? null;
 }
+
+export const ProblemsRepository = {
+  getProblemById,
+  getProblemByContestIdAndIndex,
+};

@@ -1,13 +1,13 @@
 import { pool } from '../config/postgres.js';
 
-type UserData = {
+export type UserData = {
   id: string;
   username: string;
   email: string;
   passwordHash: string;
 };
 
-export const getUserById = async (id: string): Promise<UserData | null> => {
+const getUserById = async (id: string): Promise<UserData | null> => {
     const query = 'SELECT * FROM users WHERE id = $1';
     const values = [id];
 
@@ -15,7 +15,7 @@ export const getUserById = async (id: string): Promise<UserData | null> => {
     return result.rows[0] || null;
 };
 
-export const getUserByUsername = async (username: string): Promise<UserData | null> => {
+const getUserByUsername = async (username: string): Promise<UserData | null> => {
     const query = 'SELECT * FROM users WHERE username = $1';
     const values = [username];
 
@@ -23,7 +23,7 @@ export const getUserByUsername = async (username: string): Promise<UserData | nu
     return result.rows[0] || null;
 };
 
-export const getUserByEmail = async (email: string): Promise<UserData | null> => {
+const getUserByEmail = async (email: string): Promise<UserData | null> => {
     const query = 'SELECT * FROM users WHERE email = $1';
     const values = [email];
 
@@ -32,7 +32,7 @@ export const getUserByEmail = async (email: string): Promise<UserData | null> =>
 };
 
 //could use getUserByUsername to check but this is more efficient
-export const checkUsernameExists = async (username: string): Promise<boolean> => {
+const checkUsernameExists = async (username: string): Promise<boolean> => {
     const query = 'SELECT EXISTS(SELECT 1 FROM users WHERE username = $1) AS exists';
     const values = [username];
 
@@ -40,7 +40,7 @@ export const checkUsernameExists = async (username: string): Promise<boolean> =>
     return result.rows[0].exists;
 };
 
-export const checkEmailExists = async (email: string): Promise<boolean> => {
+const checkEmailExists = async (email: string): Promise<boolean> => {
     const query = 'SELECT EXISTS(SELECT 1 FROM users WHERE email = $1) AS exists';
     const values = [email];
 
@@ -49,7 +49,7 @@ export const checkEmailExists = async (email: string): Promise<boolean> => {
 };
 
 
-export const createUser = async (username: string, email: string, passwordHash: string): Promise<UserData> => {
+const createUser = async (username: string, email: string, passwordHash: string): Promise<UserData> => {
     const query = `
         INSERT INTO users (username, email, password_hash)
         VALUES ($1, $2, $3)
@@ -61,7 +61,7 @@ export const createUser = async (username: string, email: string, passwordHash: 
     return result.rows[0];
 }
 
-export const changeUserPassword = async (id: string, newPasswordHash: string) : Promise<UserData> => {
+const changeUserPassword = async (id: string, newPasswordHash: string) : Promise<UserData> => {
   const query = 'UPDATE users SET password_hash = $1 WHERE id = $2::uuid RETURNING *';
   const values = [newPasswordHash, id];
 
@@ -69,10 +69,21 @@ export const changeUserPassword = async (id: string, newPasswordHash: string) : 
   return rows[0];
 }
 
-export const changeUsername = async (id: string, newUsername: string) : Promise<UserData> => {
+const changeUsername = async (id: string, newUsername: string) : Promise<UserData> => {
   const query = 'UPDATE users SET username = $1 WHERE id = $2::uuid RETURNING *';
   const values = [newUsername, id];
 
   const { rows } = await pool.query(query, values);
   return rows[0];
 }
+
+export const UserRepository = {
+    getUserById,
+    getUserByUsername,
+    getUserByEmail,
+    checkUsernameExists,
+    checkEmailExists,
+    createUser,
+    changeUserPassword,
+    changeUsername
+};

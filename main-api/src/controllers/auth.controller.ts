@@ -1,57 +1,43 @@
 import type { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import * as bcrypt from 'bcrypt';
 
-import { env } from '../config/env';
-import { changeUserPassword, checkEmailExists, checkUsernameExists, createUser, getUserByEmail, getUserById, getUserByUsername } from '../repositories/user.repository';
 import type { DecodedToken } from '../middleware/auth';
+import { UserRepository } from '../repositories/user.repository';
+import { AuthService, REFRESH_TOKEN_EXPIRATION } from '../services/auth.service';
 
-const ACCESS_TOKEN_EXPIRATION = '5m';
-const REFRESH_TOKEN_EXPIRATION = '7d';
+const loginUser = async (request: Request, response: Response) => {
+  const { username, password } = request.body;
 
-export const loginUser = async (request: Request, response: Response) => {
-  const { username, password } = request.body as { username: string; password: string };
+  if (!username || !password) {
+    return response.status(400).json({ error: 'Username and password are required' });
+  }
 
   const isEmail = username.includes('@');
 
-  var user;
+  var loginResponse = null;
   if (isEmail) {
-    user = await getUserByEmail(username);
+    loginResponse = await AuthService.loginUserByEmail(username, password);
   } else {
-    user = await getUserByUsername(username);
+    loginResponse = await AuthService.loginUserByUsername(username, password);
   }
 
-  if (!user) {
+  if (!loginResponse) {
     return response.status(401).json({ error: 'Invalid credentials' });
   }
-
-  const payload = {
-    id: user.id,
-    username: user.username,
-  };
-
-  const accessToken = jwt.sign(payload, env.jwtAccessTokenSecret as string, {
-    expiresIn: ACCESS_TOKEN_EXPIRATION,
-  });
-
-  const refreshToken = jwt.sign(payload, env.jwtRefreshTokenSecret as string, {
-    expiresIn: REFRESH_TOKEN_EXPIRATION,
-  });
 
   //todo save refresh token to redis/database for future validation and revocation if needed
   //refresh token as cookie
   //ensure to make the same changes in this as in refreshToken function
-  response.cookie('refreshToken', refreshToken, {
+  response.cookie('refreshToken', loginResponse.refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: parseToMilliseconds(REFRESH_TOKEN_EXPIRATION),
   });
 
-  return response.status(200).json({ accessToken });
+  return response.status(200).json({ accessToken: loginResponse.accessToken });
 };
 
-export const logoutUser = async (_request: Request, response: Response) => {
+const logoutUser = async (_request: Request, response: Response) => {
   //clear refresh token cookie
   response.clearCookie('refreshToken', {
     httpOnly: true,
@@ -60,16 +46,16 @@ export const logoutUser = async (_request: Request, response: Response) => {
   });
 
   return response.status(200).json({ message: 'Logged out successfully' });
-}
+};
 
-export const checkUsernameAvailability = async (request: Request, response: Response) => {
+const checkUsernameAvailability = async (request: Request, response: Response) => {
   const { username } = request.query as { username: string };
 
   if (!username) {
     return response.status(400).json({ error: 'Username is required' });
   }
 
-  const user = await checkUsernameExists(username);
+  const user = await UserRepository.checkUsernameExists(username);
 
   if (user) {
     return response.status(200).json({ available: false });
@@ -78,35 +64,23 @@ export const checkUsernameAvailability = async (request: Request, response: Resp
   return response.status(200).json({ available: true });
 };
 
-export const registerUser = async (request: Request, response: Response) => {
+const registerUser = async (request: Request, response: Response) => {
   const { username, email, password } = request.body as { username: string; email: string; password: string };
 
   if (!username || !email || !password) {
     return response.status(400).json({ error: 'Username, email and password are required' });
   }
 
-  const usernameExists = await checkUsernameExists(username);
-  if (usernameExists) {
-    return response.status(400).json({ error: 'Given username is already taken' });
-  }
-  
-  const emailExists = await checkEmailExists(email);
-  if (emailExists) {
-    return response.status(400).json({ error: 'An account with that email already exists' });
+  const { user, err } = await AuthService.registerUser(username, email, password);
+  if (err) {
+    return response.status(400).json({ error: err });
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
-
-  const newUser = await createUser(username, email, passwordHash);
-
-  if (!newUser) {
-    return response.status(500).json({ error: 'Failed to create user' });
-  }
-
-  return response.status(201).json({ message: 'User registered successfully', userId: newUser.id });
+  return response.status(200).json({ message: 'User registered successfully', userId: user?.id });
 };
 
-export const changePassword = async (request: Request, response: Response) => {
+const changePassword = async (request: Request, response: Response) => {
+  const { id } = (request as any).user as DecodedToken;
   const { oldPassword, newPassword } = request.body as { oldPassword: string; newPassword: string };
   //even tho user is already logged in, as a precaution ask for old password to verify identity
 
@@ -114,56 +88,36 @@ export const changePassword = async (request: Request, response: Response) => {
     return response.status(400).json({ error: 'Old password and new password are required' });
   }
 
-  const { id } = (request as any).user as DecodedToken;
-  const user = await getUserById(id);
-
-  if (!user) {
-    return response.status(404).json({ error: 'User not found' });
+  const { err } = await AuthService.changePassword(id, oldPassword, newPassword);
+  if (err) {
+    return response.status(400).json({ error: err });
   }
-
-  const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
-  if (!isMatch) {
-    return response.status(401).json({ error: 'Old password is incorrect' });
-  }
-
-  const newPasswordHash = await bcrypt.hash(newPassword, 10);
-  await changeUserPassword(user.id, newPasswordHash);
 
   return response.status(200).json({ message: 'Password changed successfully' });
 };
 
-export const refreshToken = async (request: Request, response: Response) => {
+const refreshToken = async (request: Request, response: Response) => {
   const refreshToken = request.cookies.refreshToken;
 
-  if (!refreshToken) {
-    return response.status(401).json({ error: 'Refresh token is required' });
+  const { accessToken, err } = await AuthService.refreshAccessToken(refreshToken);
+
+  if (err) {
+    return response.status(401).json({ error: err });
   }
 
-  try {
-    const decoded = jwt.verify(refreshToken, env.jwtRefreshTokenSecret as string) as { id: string; username: string };
+  return response.status(200).json({ accessToken });
+}
 
-    const payload = {
-      id: decoded.id,
-      username: decoded.username,
-    };
-
-    const newAccessToken = jwt.sign(payload, env.jwtAccessTokenSecret as string, {
-      expiresIn: ACCESS_TOKEN_EXPIRATION,
-    });
-
-    return response.status(200).json({ accessToken: newAccessToken });
-  } catch (err) {
-    //clear cookie if refresh token is invalid
-    response.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
-    return response.status(401).json({ error: 'Invalid refresh token' });
-  }
+export const AuthController = {
+  loginUser,
+  logoutUser,
+  checkUsernameAvailability,
+  registerUser,
+  changePassword,
+  refreshToken
 };
 
-function parseToMilliseconds(timeStr : string): number {
+function parseToMilliseconds(timeStr: string): number {
   const value = parseInt(timeStr);
   const unit = timeStr.slice(-1);
 

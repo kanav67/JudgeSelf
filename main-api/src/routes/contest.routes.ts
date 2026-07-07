@@ -1,20 +1,20 @@
 import express from 'express';
 import { asyncHandler } from '../utils/async-handler.js';
 import { authenticate } from '../middleware/auth.js';
-import { handleCreateContest, handleGetContest } from '../controllers/contest.controller.js';
-import { handleGetProblem, handleGetProblemById } from '../controllers/problem.controller.js';
-import { getImage, getImageById } from '../controllers/images.controller.js';
+import { ContestController } from '../controllers/contest.controller.js';
+import { ProblemController } from '../controllers/problem.controller.js';
+import { ImageController } from '../controllers/images.controller.js';
 
 const contestRoutes = express.Router();
 
-contestRoutes.post('/create', authenticate, handleCreateContest);
-contestRoutes.get('/:id', handleGetContest);
+contestRoutes.post('/create', authenticate, ContestController.createContest);
+contestRoutes.get('/:id', ContestController.getContest);
 
 //deleted problems
-contestRoutes.get('/:contestId/hidden/:problemId', asyncHandler(handleGetProblemById));
-contestRoutes.get('/:contestId/hidden/:problemId/:imageId', asyncHandler(getImageById));
+contestRoutes.get('/:contestId/hidden/:problemId', asyncHandler(ProblemController.getProblemById));
+contestRoutes.get('/:contestId/hidden/:problemId/:imageId', asyncHandler(ImageController.getImageById));
 
-contestRoutes.get('/:contestId/:problemIndex', handleGetProblem);
-contestRoutes.get('/:contestId/:problemIndex/:imageId', asyncHandler(getImage));
+contestRoutes.get('/:contestId/:problemIndex', ProblemController.getProblem);
+contestRoutes.get('/:contestId/:problemIndex/:imageId', asyncHandler(ImageController.getImage));
 
 export { contestRoutes };

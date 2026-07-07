@@ -1,17 +1,23 @@
 import express from 'express';
 import { asyncHandler } from '../utils/async-handler.js';
-import { changePassword, loginUser, logoutUser, refreshToken, registerUser } from '../controllers/auth.controller.js';
+import { AuthController } from '../controllers/auth.controller.js';
 import { authenticate } from '../middleware/auth.js';
+import z from 'zod';
 
 const authRoutes = express.Router();
 
-authRoutes.post('/login', asyncHandler(loginUser));
-authRoutes.get('/signup', asyncHandler(registerUser));
+const loginSchema = z.object({
+    username: z.string().min(1, 'Username is required'),
+    password: z.string().min(1, 'Password is required'),
+    });
+
+authRoutes.post('/login', asyncHandler(AuthController.loginUser));
+authRoutes.get('/signup', asyncHandler(AuthController.registerUser));
 
 authRoutes.use(authenticate);
 
-authRoutes.get('/logout', asyncHandler(logoutUser));
-authRoutes.post('/changepassword', asyncHandler(changePassword));
-authRoutes.get('/refresh-token', asyncHandler(refreshToken));
+authRoutes.get('/logout', asyncHandler(AuthController.logoutUser));
+authRoutes.post('/changepassword', asyncHandler(AuthController.changePassword));
+authRoutes.get('/refresh-token', asyncHandler(AuthController.refreshToken));
 
 export { authRoutes };

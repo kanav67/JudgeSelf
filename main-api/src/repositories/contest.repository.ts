@@ -10,7 +10,7 @@ export type ContestData = {
   problems: ProblemRecord[] | null;
 };
 
-export const createContest = async (contest: { name: string; start_time: string; end_time: string; owner_id: string }) : Promise<ContestData> => {
+const createContest = async (contest: { name: string; start_time: string; end_time: string; owner_id: string }) : Promise<ContestData> => {
   const query = `
     INSERT INTO contests (name, start_time, end_time, owner_id)
     VALUES ($1, $2, $3, $4)
@@ -23,7 +23,7 @@ export const createContest = async (contest: { name: string; start_time: string;
   return rows[0];
 };
 
-export const getContestById = async (id: string, includeProblemData: boolean) : Promise<ContestData | null> => {
+const getContestById = async (id: string, includeProblemData: boolean) : Promise<ContestData | null> => {
   const query = 'SELECT * FROM contests WHERE id = $1::uuid';
   const values = [id];
 
@@ -37,7 +37,7 @@ export const getContestById = async (id: string, includeProblemData: boolean) : 
   return contest;
 };
 
-export const getProblemsDataByContestId = async (contestId: string) : Promise<ProblemRecord[]> => {
+const getProblemsDataByContestId = async (contestId: string) : Promise<ProblemRecord[]> => {
   const query = `
     SELECT 
     id,
@@ -60,3 +60,9 @@ export const getProblemsDataByContestId = async (contestId: string) : Promise<Pr
   const { rows } = await pool.query(query, values);
   return rows;
 }
+
+export const ContestRepository = {
+  createContest,
+  getContestById,
+  getProblemsDataByContestId,
+};
