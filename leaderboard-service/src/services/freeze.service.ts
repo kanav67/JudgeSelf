@@ -56,8 +56,8 @@ export async function executeContestHardFreeze(contestId: string): Promise<void>
     await client.query(`DELETE FROM contest_results WHERE contest_id = $1`, [contestId]);
 
     const insertQuery = `
-      INSERT INTO contest_results (contest_id, user_id, rank, problems_solved, penalty, problem_details)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO contest_results (contest_id, user_id, rank, score, problems_solved, penalty, problem_details)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
 
     //todo in future, for about 10k users this should be fine. If we want absoulte performance look into COPY
@@ -67,6 +67,7 @@ export async function executeContestHardFreeze(contestId: string): Promise<void>
         contestId,
         entry.userId,
         i + 1,
+        entry.score,
         entry.solved,
         entry.penalty,
         JSON.stringify(entry.details)

@@ -71,3 +71,17 @@ CREATE TABLE IF NOT EXISTS contests (
 CREATE UNIQUE INDEX unique_contestid_problem_index 
 ON problems (contest_id, problem_index) 
 WHERE problem_index IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS contest_results (
+  contest_id INT NOT NULL REFERENCES contests(id),
+  user_id UUID NOT NULL REFERENCES users(id),
+  rank INT NOT NULL,
+  score BIGINT NOT NULL,
+  problems_solved INT NOT NULL,
+  penalty BIGINT NOT NULL,
+  problem_details JSONB NOT NULL,
+  PRIMARY KEY (contest_id, user_id)
+);
+
+CREATE INDEX idx_contest_results_contest_rank 
+ON contest_results (contest_id, rank);

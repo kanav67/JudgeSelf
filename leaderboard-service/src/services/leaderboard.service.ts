@@ -99,13 +99,18 @@ export const getLeaderboardPage = async (contestId: string, page: number, pageSi
 const getLeaderboardPageFromDB = async (contestId: string, page: number, pageSize: number): Promise<LeaderboardRow[]> => {
   const startIdx = (page - 1) * pageSize;
 
-  //todo use Keyset Pagination
+  //using keyset pagination by comparing rank instead of OFFSET
+  //fetches rows with rank > startRank
+  const startRank = startIdx;
+
   const dbResult = await pgPool.query(
-    `SELECT rank, user_id, problems_solved, penalty, problem_details 
-           FROM contest_results 
-           WHERE contest_id = $1 ORDER BY rank ASC LIMIT $2 OFFSET $3`,
-    [contestId, pageSize, startIdx]
+    `SELECT rank, user_id, problems_solved, penalty, problem_details
+           FROM contest_results
+           WHERE contest_id = $1 AND rank > $2
+           ORDER BY rank ASC LIMIT $3`,
+    [contestId, startRank, pageSize]
   );
+
   return dbResult.rows;
 };
 
