@@ -15,11 +15,12 @@ type RabbitMQPublisher struct {
 }
 
 type QueueMessage struct {
-	SubmissionID string `json:"submission_id"`
-	Status       string `json:"status"`
-	UserId       string `json:"user_id"`
-	ContestID    string `json:"contest_id"`
-	ProblemIndex string `json:"problem_index"`
+	SubmissionID           string `json:"submission_id"`
+	Status                 string `json:"status"`
+	UserId                 string `json:"user_id"`
+	ContestID              string `json:"contest_id"`
+	ProblemId              string `json:"problem_id"`
+	RelativeSubmissionTime int64  `json:"relative_submission_time"`
 }
 
 func NewRabbitMQPublisher(url, queueName string) (*RabbitMQPublisher, error) {

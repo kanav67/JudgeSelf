@@ -23,11 +23,12 @@ type ProblemData struct {
 }
 
 type SubmissionRequest struct {
-	ProblemID string `json:"problem_id"`
-	Language  string `json:"language"`
-	Code      string `json:"code"`
-	UserID    string
-	Type      string
+	ProblemID              string `json:"problem_id"`
+	Language               string `json:"language"`
+	Code                   string `json:"code"`
+	UserID                 string
+	Type                   string
+	RelativeSubmissionTime int64
 }
 
 type SubmissionResponse struct {
@@ -41,7 +42,11 @@ type QueueMessage struct {
 	Language       string `json:"language"`
 	ProblemID      string `json:"problem_id"`
 	ProblemVersion int    //future
-	Type           string `json:"type"`
+
+	//helps in publishing to leaderboard
+	Type                   string `json:"type"` //can be "PRACTICE" or "RATED"
+	UserID                 string `json:"user_id"`
+	RelativeSubmissionTime int64  `json:"relative_submission_time"`
 }
 
 type App struct {
@@ -137,8 +142,10 @@ func (app *App) HandleSubmit(w http.ResponseWriter, r *http.Request) {
 
 	if time.Now().Before(problemData.ContestInfo.StartTime) || time.Now().After(problemData.ContestInfo.EndTime) {
 		req.Type = "PRACTICE"
+		req.RelativeSubmissionTime = -1
 	} else {
 		req.Type = "RATED"
+		req.RelativeSubmissionTime = time.Now().Unix() - problemData.ContestInfo.StartTime.Unix()
 	}
 
 	subID, err := app.DB.CreateSubmission(ctx, req)

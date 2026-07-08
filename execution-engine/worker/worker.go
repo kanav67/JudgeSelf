@@ -150,11 +150,12 @@ func (w *Worker) PostExecute(ctx context.Context, results []models.Result) error
 	if w.Job.SubmissionData.Type == "RATED" {
 		//we don't care about the error here, if it fails leaderboard should auto regenerate
 		_ = w.Engine.RabbitMQPublisher.PublishSubmissionResult(ctx, engine.QueueMessage{
-			SubmissionID: w.Job.SubmissionData.SubmissionID,
-			UserId:       w.Job.SubmissionData.UserID,
-			Status:       status,
-			ContestID:    w.Job.ProblemData.ContestID,
-			ProblemIndex: w.Job.ProblemData.ProblemIndex,
+			SubmissionID:           w.Job.SubmissionData.SubmissionID,
+			UserId:                 w.Job.SubmissionData.UserID,
+			RelativeSubmissionTime: w.Job.SubmissionData.RelativeSubmissionTime,
+			Status:                 status,
+			ContestID:              w.Job.ProblemData.ContestID,
+			ProblemId:              w.Job.ProblemData.ProblemID,
 		})
 	}
 

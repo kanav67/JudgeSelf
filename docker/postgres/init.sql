@@ -47,10 +47,11 @@ CREATE TABLE IF NOT EXISTS submissions (
   user_id UUID NOT NULL REFERENCES users(id),
   code TEXT NOT NULL,
   language TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'queue',
+  status TEXT NOT NULL DEFAULT 'QUEUE',
   time BIGINT,
   memory BIGINT,
-  results JSONB, -- JSONB will help in indexing in future 
+  results JSONB, -- JSONB will help in indexing in future
+  relative_submission_time BIGINT, -- relative to contest start time
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

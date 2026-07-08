@@ -17,6 +17,7 @@ type SubmissionData struct {
 	//helps in publishing to leaderboard
 	Type   string `json:"type"` //can be "PRACTICE" or "RATED"
 	UserID string `json:"user_id"`
+	RelativeSubmissionTime int64  `json:"relative_submission_time"`
 }
 
 type ProblemData struct {

@@ -62,10 +62,10 @@ func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (
 }
 
 func (r *PostgresClient) CreateSubmission(ctx context.Context, req SubmissionRequest) (string, error) {
-	query := fmt.Sprintf(`INSERT INTO %s (problem_id, language, code, user_id, updated_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id`, r.submissionTable)
+	query := fmt.Sprintf(`INSERT INTO %s (problem_id, language, code, user_id, updated_at, relative_submission_time) VALUES ($1, $2, $3, $4, NOW(), $5) RETURNING id`, r.submissionTable)
 
 	var submissionID string
-	err := r.pool.QueryRow(ctx, query, req.ProblemID, req.Language, req.Code, req.UserID).Scan(&submissionID)
+	err := r.pool.QueryRow(ctx, query, req.ProblemID, req.Language, req.Code, req.UserID, req.RelativeSubmissionTime).Scan(&submissionID)
 	if err != nil {
 		return "", err
 	}
