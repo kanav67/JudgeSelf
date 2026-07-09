@@ -22,6 +22,8 @@ const keyMap: Record<string, string> = {
 };
 
 function reviver(this: any, key: string, value: any) {
+  if (keyMap[key] == key) return value;
+  
   if (keyMap[key]) {
     this[keyMap[key]] = value;
     return;
@@ -40,6 +42,7 @@ export const StartRabbitMQ = async () => {
     } catch (error) {
       console.error('Failed to process message from consumer queue:', error);
       rmqChannel.nack(msg, false, true);
+      throw error;
     }
   });
 }

@@ -74,7 +74,7 @@ func (w *Worker) Start(ctx context.Context, jobQueue <-chan models.Job) {
 				_ = job.Ack()
 			}
 
-			log.Printf("[Worker %d] Job verdict: %+v", w.BoxID, job.Verdict)
+			log.Printf("[Worker %d] Job verdict: %+v", w.BoxID, []interface{}{job.Verdict.Memory, job.Verdict.Time, job.Verdict.Status, job.Verdict.Results[len(job.Verdict.Results)-1]})
 		}
 	}
 }

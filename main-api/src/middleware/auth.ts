@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { env } from "../config/env";
 
 export type DecodedToken = {
   id: string;
@@ -28,7 +29,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 
 function decodeToken(token: string): DecodedToken | null {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET as string) as DecodedToken;
+    return jwt.verify(token, env.jwtAccessTokenSecret) as DecodedToken;
   } catch (err) {
     return null;
   }

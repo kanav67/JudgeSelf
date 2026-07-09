@@ -1,0 +1,543 @@
+2026/07/09 07:13:46 Total 3 languages loaded
+2026/07/09 07:13:46 [Worker 1] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 2] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 3] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 4] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 5] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 6] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 7] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 8] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 9] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 10] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 11] Online and waiting for jobs...
+2026/07/09 07:13:46 [Worker 12] Online and waiting for jobs...
+2026/07/09 07:13:55 Received delivery: {"submission_id":"13","source_code":"#include \u003cbits/stdc++.h\u003e\nusing namespace std;\n\ntypedef long long ll;\nlong long INF=1e18;\n\nvector\u003cvector\u003cll\u003e\u003e allPairsDijkstra(int n, vector\u003cvector\u003cpair\u003cint, ll\u003e\u003e\u003e\u0026 adj, string\u0026 status) {\n    vector\u003cvector\u003cll\u003e\u003e dist(n, vector\u003cll\u003e(n, INF));\n\n    for (int src = 0; src \u003c n; ++src) {\n        priority_queue\u003cpair\u003cll, int\u003e, vector\u003cpair\u003cll, int\u003e\u003e, greater\u003c\u003e\u003e pq;\n        if (status[src] == 'x') continue;\n        \n        dist[src][src] = 0;\n        pq.push({0, src});\n\n        while (!pq.empty()) {\n            auto d = pq.top().first;\n            auto u = pq.top().second;\n            pq.pop();\n            if (d \u003e dist[src][u]) continue;\n\n            for (auto val : adj[u]) {\n                auto v = val.first;\n                auto w = val.second;\n                \n                if (status[v] == 'x') continue;\n\n                if (dist[src][v] \u003e dist[src][u] + w) {\n                    dist[src][v] = dist[src][u] + w;\n                    pq.push({dist[src][v], v});\n                }\n            }\n        }\n    }\n\n    return dist;\n}\n\nvoid solve() {\n    int n, m, q;\n    cin \u003e\u003e n \u003e\u003e m \u003e\u003e q;\n\n    vector\u003cvector\u003cpair\u003cint, ll\u003e\u003e\u003e adj(n);\n    for(int i=0; i\u003cm; i++) {\n        int u, v, w;\n        cin \u003e\u003e u \u003e\u003e v \u003e\u003e w;\n        adj[u-1].push_back({v-1, w});\n        adj[v-1].push_back({u-1, w});\n    }\n\n    string status;\n    cin \u003e\u003e status;\n\n    vector\u003cvector\u003cll\u003e\u003e dist = allPairsDijkstra(n, adj, status);\n\n    //debug\n    // for(int i=0;i\u003cdist.size();i++){\n    //     for(int j=0;j\u003cdist[i].size();j++){\n    //         cout \u003c\u003c i \u003c\u003c \" \" \u003c\u003c j \u003c\u003c \" \" \u003c\u003c (dist[i][j] \u003e= INF ? -1 : dist[i][j]) \u003c\u003c endl;\n    //     }\n    // }\n\n    while(q--) {\n        int type;\n        cin \u003e\u003e type;\n        if (type == 0) {\n            int x, y;\n            cin \u003e\u003e x \u003e\u003e y;\n            x--;\n            y--;\n            ll ans = dist[x][y];\n            if (ans \u003e= INF)\n                cout \u003c\u003c -1 \u003c\u003c endl;\n            else\n                cout \u003c\u003c ans \u003c\u003c endl;\n        } else {  // type == 1\n            int x;\n            cin \u003e\u003e x;\n            x--;\n            status[x] = (status[x] == '.') ? 'x' : '.';\n            dist = allPairsDijkstra(n, adj, status);\n        }\n    }\n}\n\nint main(){\n    int t;\n    cin \u003e\u003e t;\n    while(t--){\n        solve();\n    }\n    return 0;\n}","language":"cpp","problem_id":"86541b85-b7cc-4ba5-a23d-019d549ec8c3","ProblemVersion":14,"type":"RATED","user_id":"64b13944-c491-4c51-a5fc-49e663b712ba","relative_submission_time":38635}
+2026/07/09 07:13:55 Parsed job: {SubmissionData:0x11825ac1a540 ProblemData:<nil> Verdict:<nil> Ack:<nil> Nack:<nil>}
+2026/07/09 07:13:55 [Worker 1] Received job: 13
+2026/07/09 07:13:55 Loading problem 86541b85-b7cc-4ba5-a23d-019d549ec8c3 from database
+2026/07/09 07:13:55 Successfully loaded problem 86541b85-b7cc-4ba5-a23d-019d549ec8c3 from database
+2026/07/09 07:13:55 Downloading problem 86541b85-b7cc-4ba5-a23d-019d549ec8c3 version 14 from S3 to problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3.zip
+2026/07/09 07:13:56 Successfully loaded problem 86541b85-b7cc-4ba5-a23d-019d549ec8c3 version 14 from S3 to /tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14
+2026/07/09 07:13:56 Compiling checker code with source from /tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/checker
+2026/07/09 07:13:56 Compiling code for language cpp.g++17 with command: [/usr/bin/g++ -x c++ source -o outputBin]
+2026/07/09 07:13:56 Writing source code to /var/lib/isolate/1/box/source
+2026/07/09 07:13:56 Running command: /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin -d /etc:noexec -p --run -- /usr/bin/g++ -x c++ source -o outputBin
+2026/07/09 07:14:00 Compiling code for language cpp with command: [/usr/bin/g++ -x c++ source -o outputBin]
+2026/07/09 07:14:00 Writing source code to /var/lib/isolate/1/box/source
+2026/07/09 07:14:00 Running command: /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin -d /etc:noexec -p --run -- /usr/bin/g++ -x c++ source -o outputBin
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/01 /output/01.out /tests/01.a
+2026/07/09 07:14:02 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 3 number(s): "8 7 8"
+ IsolateMetadata:0x11825ac14870}
+2026/07/09 07:14:02 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.004 0.005 4620 0 0  }
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/02 /output/02.out /tests/02.a
+2026/07/09 07:14:02 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 8 numbers
+ IsolateMetadata:0x11825aa9c320}
+2026/07/09 07:14:02 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.004 0.003 4592 0 0  }
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/03 /output/03.out /tests/03.a
+2026/07/09 07:14:02 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 24 numbers
+ IsolateMetadata:0x11825acee0a0}
+2026/07/09 07:14:02 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.004 0.003 4536 0 0  }
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/04 /output/04.out /tests/04.a
+2026/07/09 07:14:02 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 9858 numbers
+ IsolateMetadata:0x11825b2b0000}
+2026/07/09 07:14:02 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.016 0.016 4504 0 0  }
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/05 /output/05.out /tests/05.a
+2026/07/09 07:14:02 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 12549 numbers
+ IsolateMetadata:0x11825b2b01e0}
+2026/07/09 07:14:02 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.022 0.022 4548 0 0  }
+2026/07/09 07:14:02 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:03 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/06 /output/06.out /tests/06.a
+2026/07/09 07:14:03 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 18881 numbers
+ IsolateMetadata:0x11825acee690}
+2026/07/09 07:14:03 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.037 0.038 4480 0 0  }
+2026/07/09 07:14:03 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:03 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/07 /output/07.out /tests/07.a
+2026/07/09 07:14:03 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 8894 numbers
+ IsolateMetadata:0x11825acee9b0}
+2026/07/09 07:14:03 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.017 0.017 4504 0 0  }
+2026/07/09 07:14:03 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:03 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/08 /output/08.out /tests/08.a
+2026/07/09 07:14:03 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 38077 numbers
+ IsolateMetadata:0x11825aceeb90}
+2026/07/09 07:14:03 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.07 0.07 4932 0 0  }
+2026/07/09 07:14:03 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:03 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/09 /output/09.out /tests/09.a
+2026/07/09 07:14:03 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 19625 numbers
+ IsolateMetadata:0x11825aceed70}
+2026/07/09 07:14:03 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.034 0.034 4620 0 0  }
+2026/07/09 07:14:03 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:03 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/10 /output/10.out /tests/10.a
+2026/07/09 07:14:04 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 18106 numbers
+ IsolateMetadata:0x11825aa9c910}
+2026/07/09 07:14:04 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.048 0.048 4564 0 0  }
+2026/07/09 07:14:04 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:04 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/11 /output/11.out /tests/11.a
+2026/07/09 07:14:04 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 5282 numbers
+ IsolateMetadata:0x11825acef090}
+2026/07/09 07:14:04 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.012 0.012 4528 0 0  }
+2026/07/09 07:14:04 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/12 /output/12.out /tests/12.a
+2026/07/09 07:14:05 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 21282 numbers
+ IsolateMetadata:0x11825ac14190}
+2026/07/09 07:14:05 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.04 0.04 4640 0 0  }
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/13 /output/13.out /tests/13.a
+2026/07/09 07:14:05 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 9104 numbers
+ IsolateMetadata:0x11825ac144b0}
+2026/07/09 07:14:05 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.02 0.02 4600 0 0  }
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/14 /output/14.out /tests/14.a
+2026/07/09 07:14:05 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 9990 numbers
+ IsolateMetadata:0x11825ac147d0}
+2026/07/09 07:14:05 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.017 0.016 4576 0 0  }
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/15 /output/15.out /tests/15.a
+2026/07/09 07:14:05 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 24050 numbers
+ IsolateMetadata:0x11825ac14af0}
+2026/07/09 07:14:05 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.044 0.043 4688 0 0  }
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/16 /output/16.out /tests/16.a
+2026/07/09 07:14:05 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 34591 numbers
+ IsolateMetadata:0x11825ac14e10}
+2026/07/09 07:14:05 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.065 0.064 4800 0 0  }
+2026/07/09 07:14:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:06 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/17 /output/17.out /tests/17.a
+2026/07/09 07:14:07 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 99900 numbers
+ IsolateMetadata:0x11825ac15130}
+2026/07/09 07:14:07 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.316 0.316 7688 0 0  }
+2026/07/09 07:14:07 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:07 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/18 /output/18.out /tests/18.a
+2026/07/09 07:14:07 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 99900 numbers
+ IsolateMetadata:0x11825aa9c000}
+2026/07/09 07:14:07 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.151 0.151 5396 0 0  }
+2026/07/09 07:14:07 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:11 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/19 /output/19.out /tests/19.a
+2026/07/09 07:14:11 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 99900 numbers
+ IsolateMetadata:0x11825ab46140}
+2026/07/09 07:14:11 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.339 0.34 8140 0 0  }
+2026/07/09 07:14:11 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:18 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/20 /output/20.out /tests/20.a
+2026/07/09 07:14:18 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 9990 numbers
+ IsolateMetadata:0x11825ac15450}
+2026/07/09 07:14:18 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.034 0.034 4604 0 0  }
+2026/07/09 07:14:18 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:18 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/21 /output/21.out /tests/21.a
+2026/07/09 07:14:18 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 63 numbers
+ IsolateMetadata:0x11825ab462d0}
+2026/07/09 07:14:18 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.004 0.004 4552 0 0  }
+2026/07/09 07:14:18 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:18 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/22 /output/22.out /tests/22.a
+2026/07/09 07:14:18 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 88 numbers
+ IsolateMetadata:0x11825acee370}
+2026/07/09 07:14:18 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.005 0.005 4544 0 0  }
+2026/07/09 07:14:18 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:18 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/23 /output/23.out /tests/23.a
+2026/07/09 07:14:18 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 1000 numbers
+ IsolateMetadata:0x11825acee690}
+2026/07/09 07:14:18 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.009 0.009 4496 0 0  }
+2026/07/09 07:14:18 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:18 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/24 /output/24.out /tests/24.a
+2026/07/09 07:14:19 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 1000 numbers
+ IsolateMetadata:0x11825ac15770}
+2026/07/09 07:14:19 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.011 0.013 4524 0 0  }
+2026/07/09 07:14:19 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:24 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/25 /output/25.out /tests/25.a
+2026/07/09 07:14:24 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 9990 numbers
+ IsolateMetadata:0x11825ac15a90}
+2026/07/09 07:14:24 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.04 0.04 4596 0 0  }
+2026/07/09 07:14:24 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:25 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/26 /output/26.out /tests/26.a
+2026/07/09 07:14:25 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 19980 numbers
+ IsolateMetadata:0x11825aa9c550}
+2026/07/09 07:14:25 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.037 0.037 4560 0 0  }
+2026/07/09 07:14:25 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:31 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/27 /output/27.out /tests/27.a
+2026/07/09 07:14:31 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 19980 numbers
+ IsolateMetadata:0x11825acee870}
+2026/07/09 07:14:31 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.075 0.073 5072 0 0  }
+2026/07/09 07:14:31 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:36 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/28 /output/28.out /tests/28.a
+2026/07/09 07:14:36 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 39960 numbers
+ IsolateMetadata:0x11825aceea50}
+2026/07/09 07:14:36 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.122 0.123 5500 0 0  }
+2026/07/09 07:14:36 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:36 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/29 /output/29.out /tests/29.a
+2026/07/09 07:14:37 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 39960 numbers
+ IsolateMetadata:0x11825aceed70}
+2026/07/09 07:14:37 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.066 0.065 4688 0 0  }
+2026/07/09 07:14:37 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:40 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/30 /output/30.out /tests/30.a
+2026/07/09 07:14:41 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 39960 numbers
+ IsolateMetadata:0x11825aa9c870}
+2026/07/09 07:14:41 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.149 0.149 5828 0 0  }
+2026/07/09 07:14:41 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:46 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/31 /output/31.out /tests/31.a
+2026/07/09 07:14:46 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 79920 numbers
+ IsolateMetadata:0x11825acef090}
+2026/07/09 07:14:46 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.264 0.264 7504 0 0  }
+2026/07/09 07:14:46 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:46 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/32 /output/32.out /tests/32.a
+2026/07/09 07:14:46 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 79920 numbers
+ IsolateMetadata:0x11825aa9cb90}
+2026/07/09 07:14:46 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.113 0.111 5196 0 0  }
+2026/07/09 07:14:46 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:47 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/33 /output/33.out /tests/33.a
+2026/07/09 07:14:47 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 79920 numbers
+ IsolateMetadata:0x11825b1ec000}
+2026/07/09 07:14:47 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.124 0.125 5160 0 0  }
+2026/07/09 07:14:47 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:50 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/34 /output/34.out /tests/34.a
+2026/07/09 07:14:51 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 79920 numbers
+ IsolateMetadata:0x11825ab465f0}
+2026/07/09 07:14:51 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.277 0.279 7312 0 0  }
+2026/07/09 07:14:51 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:51 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/35 /output/35.out /tests/35.a
+2026/07/09 07:14:51 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 99900 numbers
+ IsolateMetadata:0x11825ab46910}
+2026/07/09 07:14:51 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.149 0.148 5392 0 0  }
+2026/07/09 07:14:51 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:54 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/36 /output/36.out /tests/36.a
+2026/07/09 07:14:55 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 99900 numbers
+ IsolateMetadata:0x11825b1ec320}
+2026/07/09 07:14:55 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.315 0.315 8124 0 0  }
+2026/07/09 07:14:55 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:58 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/37 /output/37.out /tests/37.a
+2026/07/09 07:14:59 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 49950 numbers
+ IsolateMetadata:0x11825aa9ceb0}
+2026/07/09 07:14:59 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.189 0.188 6156 0 0  }
+2026/07/09 07:14:59 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:14:59 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/38 /output/38.out /tests/38.a
+2026/07/09 07:14:59 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 49950 numbers
+ IsolateMetadata:0x11825aa9d1d0}
+2026/07/09 07:14:59 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.067 0.067 4816 0 0  }
+2026/07/09 07:14:59 Executing cmd /usr/bin/isolate -b 1 --silent -m 3145728 -t 10.00 -w 20.00 -E 1.00 -k 65536 -f 16384 -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source
+2026/07/09 07:15:05 Executing cmd /usr/bin/isolate -b 1 --silent -m 2097152 -t 5.00 -w 10.00 -E 1.00 -k 65536 -f 16384 --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests --dir=/output=/tmp/execution-engine/13/output --dir=/tests=/tmp/execution-engine/problems/86541b85-b7cc-4ba5-a23d-019d549ec8c3_14/tests -M /var/lib/isolate/1/box/metadata.txt -E HOME=/tmp -E PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --run -- ./source /tests/39 /output/39.out /tests/39.a
+2026/07/09 07:15:05 [Worker 1] Checker execution result: &{Message:Execution completed Stdin: Stdout: Stderr:ok 9990 numbers
+ IsolateMetadata:0x11825aa9d4f0}
+2026/07/09 07:15:05 [Worker 1] Checker verdict: AC, message:  and isolate metadata: &{0.03 0.03 4580 0 0  }
+2026/07/09 07:15:05 [Worker 1] Successfully finished 13
+2026/07/09 07:15:05 [Worker 1] Job verdict: [19640 6487 AC {Test:39 Time:5.647 Memory:19556 Status:AC Message:ok 9990 numbers
+ InputSnippet:1
+1000 1000 10000
+197 95 993599837
+970 418 713064496
+675 81 76934780
+926 303 246863300
+656 606 288799184
+105 939 843064788
+188 179 523702454
+671 333 115464473
+476 152 949062153
+959 998 961825130
+90 50 311447488
+784 646 753083624
+329 735 679851480
+134 255 918482311
+229 744 252888961
+142 17 659329244
+691 917 945766024
+295 397 212089897
+229 326 22884100
+179 310 834226854
+936 969 321880901
+446 237 632306707
+241 552 339745274
+934 291 140073851
+876 508 959368354
+827 580 288287818
+295 24 243734581
+105 609 964395411
+391 710 656962067
+988 703 553806747
+945 95 852809516
+299 231 625662889
+660 913 253864306
+312 293 654876690
+220 169 744617852
+822 540 946562176
+329 875 781015164
+907 729 679471746
+545 719 217556579
+472 919 369027162
+620 943 606999635
+495 19 396207106
+399 909 588485445
+300 393 807406208
+50 34 757816059
+879 222 530592108
+277 788 375625513
+96 935 92029119
+112 279 484885728
+299 289 911935710
+578 416 50860091
+679 514 716072679
+276 605 329915981
+809 617 13803324
+294 393 825750857
+406 441 476501069
+554 942 802585 OutputSnippet:-1
+-1
+-1
+-1
+2908820329
+-1
+-1
+4523374207
+-1
+4439617738
+3722529440
+-1
+-1
+3436920444
+6387094237
+3014937432
+3351538113
+3238207203
+5322788127
+5705977315
+5477137425
+-1
+5272530276
+5187260209
+-1
+-1
+3569525839
+-1
+4654302549
+4037140261
+3035823499
+3662444992
+3292132451
+3176337232
+-1
+-1
+-1
+5571037752
+6142861529
+-1
+-1
+4565162648
+5052196334
+4603644418
+4650787604
+-1
+4166630023
+4205468248
+-1
+3494824456
+2688874742
+4241219013
+-1
+6983812884
+5863298579
+3707174542
+-1
+4246660346
+-1
+1863914063
+-1
+-1
+6416259302
+-1
+3077133360
+-1
+4925670642
+5079484064
+-1
+-1
+-1
+-1
+3341717593
+3001259018
+3654314091
+-1
+3363907998
+3671733215
+5229624366
+-1
+6586210088
+2780882102
+3382730038
+-1
+-1
+-1
+2449389044
+5113769770
+5982516314
+-1
+4363163059
+-1
+5292474340
+4532070427
+2192685985
+4985012571
+5990058783
+-1
+-1
+3220871854
+-1
+5200522222
+5114867245
+6126635851
+-1
+-1
+-1
+1917726567
+4781849420
+-1
+5573960176
+2874331904
+-1
+3945394626
+2641500987
+5316801195
+-1
+3947829079
+-1
+4319418507
+3339577758
+4209199939
+-1
+-1
+-1
+3125611703
+4932876233
+4272077707
+4477614870
+3504156148
+-1 AnswerSnippet:-1
+-1
+-1
+-1
+2908820329
+-1
+-1
+4523374207
+-1
+4439617738
+3722529440
+-1
+-1
+3436920444
+6387094237
+3014937432
+3351538113
+3238207203
+5322788127
+5705977315
+5477137425
+-1
+5272530276
+5187260209
+-1
+-1
+3569525839
+-1
+4654302549
+4037140261
+3035823499
+3662444992
+3292132451
+3176337232
+-1
+-1
+-1
+5571037752
+6142861529
+-1
+-1
+4565162648
+5052196334
+4603644418
+4650787604
+-1
+4166630023
+4205468248
+-1
+3494824456
+2688874742
+4241219013
+-1
+6983812884
+5863298579
+3707174542
+-1
+4246660346
+-1
+1863914063
+-1
+-1
+6416259302
+-1
+3077133360
+-1
+4925670642
+5079484064
+-1
+-1
+-1
+-1
+3341717593
+3001259018
+3654314091
+-1
+3363907998
+3671733215
+5229624366
+-1
+6586210088
+2780882102
+3382730038
+-1
+-1
+-1
+2449389044
+5113769770
+5982516314
+-1
+4363163059
+-1
+5292474340
+4532070427
+2192685985
+4985012571
+5990058783
+-1
+-1
+3220871854
+-1
+5200522222
+5114867245
+6126635851
+-1
+-1
+-1
+1917726567
+4781849420
+-1
+5573960176
+2874331904
+-1
+3945394626
+2641500987
+5316801195
+-1
+3947829079
+-1
+4319418507
+3339577758
+4209199939
+-1
+-1
+-1
+3125611703
+4932876233
+4272077707
+4477614870
+3504156148
+-1}]

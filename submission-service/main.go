@@ -156,12 +156,14 @@ func (app *App) HandleSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msg := QueueMessage{
-		SubmissionID:   subID,
-		ProblemID:      problemData.ProblemID, //formats it properly
-		Language:       req.Language,
-		Code:           req.Code,
-		ProblemVersion: problemData.ProblemVersion,
-		Type:           req.Type,
+		SubmissionID:           subID,
+		ProblemID:              problemData.ProblemID, //formats it properly
+		Language:               req.Language,
+		Code:                   req.Code,
+		ProblemVersion:         problemData.ProblemVersion,
+		Type:                   req.Type,
+		UserID:                 req.UserID,
+		RelativeSubmissionTime: req.RelativeSubmissionTime,
 	}
 
 	if err := app.RabbitMQPublisher.PublishSubmission(msg); err != nil {

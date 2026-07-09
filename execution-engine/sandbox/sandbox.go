@@ -14,7 +14,7 @@ const (
 	StdoutFile     = "stdout.txt"
 	StderrFile     = "stderr.txt"
 	MetadataFile   = "metadata.txt"
-	MaxBytesToRead = 64 * 1024 //64kb
+	MaxBytesToRead = 1 * 1024 //1kb
 )
 
 type Sandbox struct {

@@ -4,7 +4,7 @@ export type UserData = {
   id: string;
   username: string;
   email: string;
-  passwordHash: string;
+  password_hash: string;
 };
 
 const getUserById = async (id: string): Promise<UserData | null> => {
@@ -49,29 +49,29 @@ const checkEmailExists = async (email: string): Promise<boolean> => {
 };
 
 
-const createUser = async (username: string, email: string, passwordHash: string): Promise<UserData> => {
+const createUser = async (username: string, email: string, password_hash: string): Promise<UserData> => {
     const query = `
         INSERT INTO users (username, email, password_hash)
         VALUES ($1, $2, $3)
         RETURNING *
     `;
-    const values = [username, email, passwordHash];
+    const values = [username, email, password_hash];
 
     const result = await pool.query(query, values);
     return result.rows[0];
 }
 
-const changeUserPassword = async (id: string, newPasswordHash: string) : Promise<UserData> => {
+const changeUserPassword = async (id: string, new_password_hash: string) : Promise<UserData> => {
   const query = 'UPDATE users SET password_hash = $1 WHERE id = $2::uuid RETURNING *';
-  const values = [newPasswordHash, id];
+  const values = [new_password_hash, id];
 
   const { rows } = await pool.query(query, values);
   return rows[0];
 }
 
-const changeUsername = async (id: string, newUsername: string) : Promise<UserData> => {
+const changeUsername = async (id: string, new_username: string) : Promise<UserData> => {
   const query = 'UPDATE users SET username = $1 WHERE id = $2::uuid RETURNING *';
-  const values = [newUsername, id];
+  const values = [new_username, id];
 
   const { rows } = await pool.query(query, values);
   return rows[0];

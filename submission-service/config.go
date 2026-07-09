@@ -30,7 +30,7 @@ func LoadConfig() Config {
 		RedisPassword:    env("REDIS_PASSWORD", ""),
 		RedisDB:          intEnv("REDIS_DB", 0),
 		StatusChannel:    env("REDIS_STATUS_CHANNEL", "ws_updates"),
-		JwtSecret:        env("JWT_SECRET", "your-super-secret-key"),
+		JwtSecret:        env("JWT_SECRET", "default_access"),
 	}
 }
 

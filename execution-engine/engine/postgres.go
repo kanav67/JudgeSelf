@@ -40,6 +40,7 @@ func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (
 	SELECT 
 	id,
 	polygon_version,
+	contest_id,
 	time_limit, 
 	memory_limit, 
 	test_count,
@@ -51,6 +52,7 @@ func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (
 	err := r.pool.QueryRow(ctx, query, problemID).Scan(
 		&data.ProblemID,
 		&data.ProblemVersion,
+		&data.ContestID,
 		&data.TimeLimit,
 		&data.MemoryLimit,
 		&data.TestCount,

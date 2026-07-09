@@ -16,7 +16,7 @@ export const StartFreezeTask: () => void = () => {
 const checkForFinishedContests = async () => {
   const activeContestsQuery = `
         SELECT id FROM contests 
-        WHERE status = 'ACTIVE' AND end_time < NOW()
+        WHERE leaderboard_frozen = false AND end_time < NOW()
       `;
   const res = await pgPool.query(activeContestsQuery);
 
@@ -29,8 +29,9 @@ const checkForFinishedContests = async () => {
 
 const hasPendingSubmissions = async (contestId: string): Promise<boolean> => {
   const pendingQuery = `
-        SELECT COUNT(*) FROM submissions 
-        WHERE contest_id = $1 AND status IN ('QUEUE')
+        SELECT COUNT(*) FROM submissions s
+        JOIN problems p ON s.problem_id = p.id
+        WHERE s.contest_id = $1 AND s.status IN ('QUEUE') 
       `;
   const pendingRes = await pgPool.query(pendingQuery, [contestId]);
   const pendingCount = parseInt(pendingRes.rows[0].count, 10);

@@ -43,7 +43,7 @@ func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (
 	contest_id,
 	c.start_time,
 	c.end_time
-	FROM %s p JOIN %s c USING (contest_id) WHERE p.id = $1`, r.problemTable, r.contestTable)
+	FROM %s p JOIN %s c ON p.contest_id = c.id WHERE p.id = $1`, r.problemTable, r.contestTable)
 
 	var data ProblemData
 	err := r.pool.QueryRow(ctx, query, problemID).Scan(
@@ -62,10 +62,10 @@ func (r *PostgresClient) GetProblemData(ctx context.Context, problemID string) (
 }
 
 func (r *PostgresClient) CreateSubmission(ctx context.Context, req SubmissionRequest) (string, error) {
-	query := fmt.Sprintf(`INSERT INTO %s (problem_id, language, code, user_id, updated_at, relative_submission_time) VALUES ($1, $2, $3, $4, NOW(), $5) RETURNING id`, r.submissionTable)
+	query := fmt.Sprintf(`INSERT INTO %s (problem_id, user_id, type, language, code, relative_submission_time) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, r.submissionTable)
 
 	var submissionID string
-	err := r.pool.QueryRow(ctx, query, req.ProblemID, req.Language, req.Code, req.UserID, req.RelativeSubmissionTime).Scan(&submissionID)
+	err := r.pool.QueryRow(ctx, query, req.ProblemID, req.UserID, req.Type, req.Language, req.Code, req.RelativeSubmissionTime).Scan(&submissionID)
 	if err != nil {
 		return "", err
 	}

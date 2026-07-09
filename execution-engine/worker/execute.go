@@ -67,7 +67,7 @@ func (w *Worker) ExecuteChecker(checkerBin []byte, testInputPath, testOutputPath
 	log.Printf("[Worker %d] Checker verdict: %s, message: %s and isolate metadata: %v", w.BoxID, status, result.Message, result.IsolateMetadata)
 
 	finalResult := FormatResult(result, status)
-	finalResult.Message = "Error: \n" + result.Stderr + "\nStdout: \n" + result.Message
+	finalResult.Message = result.Stderr
 
 	return finalResult
 }

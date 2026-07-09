@@ -1,8 +1,27 @@
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  username TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS contests (
+  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name TEXT NOT NULL,
+  owner_id UUID NOT NULL REFERENCES users(id),
+  start_time TIMESTAMPTZ NOT NULL,
+  end_time TIMESTAMPTZ NOT NULL,
+  leaderboard_frozen BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS problems (
   id UUID PRIMARY KEY,
   contest_id INT NOT NULL REFERENCES contests(id),
   problem_index TEXT, -- can be null, indicating it is deleted
-  type TEXT NOT NULL, -- can be "PRACTICE" or "RATED"
 
   polygon_id TEXT NOT NULL, -- polygon url
   polygon_version INT NOT NULL,
@@ -33,18 +52,16 @@ CREATE TABLE IF NOT EXISTS problems (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS problems_polygon_id_idx ON problems (polygon_id);
-
-CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+-- ensures for non NULL problem_index, the combination of contest_id and problem_index is unique
+CREATE UNIQUE INDEX unique_contestid_problem_index 
+ON problems (contest_id, problem_index) 
+WHERE problem_index IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS submissions (
   id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   problem_id UUID NOT NULL REFERENCES problems(id),
   user_id UUID NOT NULL REFERENCES users(id),
+  type TEXT NOT NULL, -- can be "PRACTICE" or "RATED"
   code TEXT NOT NULL,
   language TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'QUEUE',
@@ -55,22 +72,6 @@ CREATE TABLE IF NOT EXISTS submissions (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE TABLE IF NOT EXISTS contests (
-  id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  name TEXT NOT NULL,
-  owner_id UUID NOT NULL REFERENCES users(id),
-  start_time TIMESTAMPTZ NOT NULL,
-  end_time TIMESTAMPTZ NOT NULL,
-  leaderboard_frozen BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- ensures for non NULL problem_index, the combination of contest_id and problem_index is unique
-CREATE UNIQUE INDEX unique_contestid_problem_index 
-ON problems (contest_id, problem_index) 
-WHERE problem_index IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS contest_results (
   contest_id INT NOT NULL REFERENCES contests(id),

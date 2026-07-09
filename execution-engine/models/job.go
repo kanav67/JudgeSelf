@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"path/filepath"
 	"strconv"
 )
@@ -32,7 +31,6 @@ type ProblemData struct {
 
 	//needed for publishing to leaderboard
 	ContestID    string
-	ProblemIndex string
 }
 
 type Verdict struct {
@@ -69,7 +67,6 @@ func ParseSubmissionData(payload []byte) (SubmissionData, error) {
 	if err := json.Unmarshal(payload, &data); err != nil {
 		return SubmissionData{}, err
 	}
-	log.Printf("Parsed submission data: %+v", data)
 	return data, nil
 }
 

@@ -34,6 +34,7 @@ export const createProblemRecord = async (problemRecord: ProblemRecord) => {
   const query = `
     INSERT INTO problems (
       id,
+      contest_id,
       polygon_id,
       polygon_version,
 
@@ -59,7 +60,7 @@ export const createProblemRecord = async (problemRecord: ProblemRecord) => {
       checker_language,
       problem_zip_key
       )
-      VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+      VALUES ($1::uuid, 1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
     RETURNING *
   `;
 

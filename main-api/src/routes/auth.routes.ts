@@ -12,12 +12,12 @@ const loginSchema = z.object({
     });
 
 authRoutes.post('/login', asyncHandler(AuthController.loginUser));
-authRoutes.get('/signup', asyncHandler(AuthController.registerUser));
+authRoutes.post('/signup', asyncHandler(AuthController.registerUser));
+authRoutes.get('/refresh-token', asyncHandler(AuthController.refreshToken));
 
 authRoutes.use(authenticate);
 
 authRoutes.get('/logout', asyncHandler(AuthController.logoutUser));
 authRoutes.post('/changepassword', asyncHandler(AuthController.changePassword));
-authRoutes.get('/refresh-token', asyncHandler(AuthController.refreshToken));
 
 export { authRoutes };

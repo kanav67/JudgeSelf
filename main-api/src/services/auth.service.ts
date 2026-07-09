@@ -19,7 +19,7 @@ export const AuthService = {
         const user = await UserRepository.getUserByEmail(email);
         if (!user) return null;
 
-        const isPasswordValid = user && (await bcrypt.compare(password, user.passwordHash));
+        const isPasswordValid = user && (await bcrypt.compare(password, user.password_hash));
         if (!isPasswordValid) return null;
 
         return loginUser(user, password);
@@ -52,7 +52,7 @@ export const AuthService = {
             return { err: 'User not found' };
         }
 
-        const isOldPasswordValid = await bcrypt.compare(oldPassword, user.passwordHash);
+        const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password_hash);
         if (!isOldPasswordValid) {
             return { err: 'Old password is incorrect' };
         }
@@ -83,7 +83,7 @@ export const AuthService = {
 }
 
 const loginUser = async (user: UserData, password: string): Promise<LoginResponse | null> => {
-    const isPasswordValid = user && (await bcrypt.compare(password, user.passwordHash));
+    const isPasswordValid = user && (await bcrypt.compare(password, user.password_hash));
     if (!isPasswordValid) return null;
 
     const payload = {

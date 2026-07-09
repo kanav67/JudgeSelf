@@ -30,7 +30,7 @@ export const UPDATE_USER_STATE_LUA = `
   -- Append new submission
   table.insert(userData.problems[probId], {
       submissionId = subId,
-      submittedAt = tonumber(subTime),
+      relativeSubmittedAt = tonumber(subTime),
       status = status
   })
 

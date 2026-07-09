@@ -51,7 +51,7 @@ func NewEngine() (*Engine, error) {
 	}
 	engine.RabbitMQClient = rabbitMQClient
 
-	rabbitMQPublisher, err := NewRabbitMQPublisher(cfg.RabbitURL, cfg.RabbitQueue)
+	rabbitMQPublisher, err := NewRabbitMQPublisher(cfg.RabbitURL, cfg.RabbitPublisherQueue)
 	if err != nil {
 		dbClient.Close()
 		rabbitMQClient.Close()

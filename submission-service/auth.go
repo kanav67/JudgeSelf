@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"strings"
-	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -31,6 +32,7 @@ func AuthMiddleware(next http.HandlerFunc, jwtSecret []byte) http.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
+			log.Printf("Token validation error: %v", err)
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
@@ -41,7 +43,7 @@ func AuthMiddleware(next http.HandlerFunc, jwtSecret []byte) http.HandlerFunc {
 			return
 		}
 
-		userID, ok := claims["user_id"].(string)
+		userID, ok := claims["id"].(string)
 		if !ok {
 			http.Error(w, "user_id not found in token", http.StatusUnauthorized)
 			return
