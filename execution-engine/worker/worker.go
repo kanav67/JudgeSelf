@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 type Worker struct {
@@ -70,11 +71,11 @@ func (w *Worker) Start(ctx context.Context, jobQueue <-chan models.Job) {
 				log.Printf("[Worker %d] Error processing %s: %v", w.BoxID, job.SubmissionData.SubmissionID, err)
 				_ = job.Nack(false)
 			} else {
-				log.Printf("[Worker %d] Successfully finished %s", w.BoxID, job.SubmissionData.SubmissionID)
+				log.Printf("[Worker %d] Successfully finished: %s", w.BoxID, job.SubmissionData.SubmissionID)
 				_ = job.Ack()
 			}
 
-			log.Printf("[Worker %d] Job verdict: %+v", w.BoxID, []interface{}{job.Verdict.Memory, job.Verdict.Time, job.Verdict.Status, job.Verdict.Results[len(job.Verdict.Results)-1]})
+			log.Printf("[Worker %d] Job verdict: %+v", w.BoxID, []interface{}{job.Verdict.Memory, job.Verdict.Time, job.Verdict.Status, job.Verdict.Results[len(job.Verdict.Results)-1].Message})
 		}
 	}
 }
@@ -95,7 +96,7 @@ func (w *Worker) RunWorker(ctx context.Context, job *models.Job) error {
 	//errors relating to downloading problem data
 	err = w.PreExecute(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "PreExecute failed on worker %d while executing job %s: \n", w.BoxID, w.Job.SubmissionData.SubmissionID)
+		log.Printf("[Worker %d] PreExecute failed while executing job %s: %v", w.BoxID, w.Job.SubmissionData.SubmissionID, err)
 		return err
 	}
 
@@ -105,7 +106,7 @@ func (w *Worker) RunWorker(ctx context.Context, job *models.Job) error {
 	//errors relating to saving to db
 	err = w.PostExecute(ctx, results)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "PostExecute failed on worker %d while executing job %s: %v", w.BoxID, w.Job.SubmissionData.SubmissionID, err)
+		log.Printf("[Worker %d] PostExecute failed while executing job %s: %v", w.BoxID, w.Job.SubmissionData.SubmissionID, err)
 		return err
 	}
 
@@ -192,7 +193,10 @@ func (w *Worker) ExecuteWorker() []models.Result {
 		testAnswerPath := w.Job.ProblemData.GetAnswerFilePath(test)
 		testOutputPath := w.GetOutputFilePath(test)
 
+		internal_userCodeExecuteTime := time.Now()
 		userCodeResult := w.ExecuteUserCode(userCodeBin, testInputPath, testOutputPath)
+		log.Printf("[Worker %d] Internal User code execution time for test %d: %v", w.BoxID, test, time.Since(internal_userCodeExecuteTime))
+
 		if userCodeResult.Status != "AC" {
 			userCodeResult.Test = test
 			results = append(results, userCodeResult)
@@ -246,9 +250,10 @@ func (w *Worker) GetOutputFilePath(test int) string {
 }
 
 func GetDefaultConfig() *sandbox.IsolateConfig {
+	//turns out compilation is memory hungry and can take some time
 	return sandbox.NewIsolateConfig(func(ic *sandbox.IsolateConfig) {
 		ic.MemoryLimit = 2 * 1024 * 1024 // 2 GB
-		ic.TimeLimit = 5.0               // 5 seconds
-		ic.WallTimeLimit = 10.0          // 10 seconds
+		ic.TimeLimit = 30.0               // 30 seconds
+		ic.WallTimeLimit = 31.0          // 31 seconds
 	})
 }

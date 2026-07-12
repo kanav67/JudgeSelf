@@ -129,7 +129,6 @@ func (c *Cache) GetOrLoad(ctx context.Context, problemID string) (models.Problem
 	if err != nil {
 		return models.ProblemData{}, err
 	}
-	log.Printf("Successfully loaded problem %s version %s from S3 to %s", problemData.ProblemID, problemData.ProblemVersion, localProblemCachePath)
 	problemData.LocalProblemDir = localProblemCachePath
 
 	return problemData, nil
@@ -160,8 +159,6 @@ func (c *DbCache) GetOrLoad(ctx context.Context, problemId string) (models.Probl
 	if err != nil {
 		return models.ProblemData{}, fmt.Errorf("Failed to get problem data from database: %v", err)
 	}
-
-	log.Printf("Successfully loaded problem %s from database", problemId)
 
 	c.store[problemId] = cacheDbItem{
 		data:      problemData,

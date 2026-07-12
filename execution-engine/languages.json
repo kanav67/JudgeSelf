@@ -6,7 +6,7 @@
     },
     {
         "Aliases": ["cpp", "cpp.g++17", "c++", "g++"],
-        "Compile": ["/usr/bin/g++", "-x", "c++", "{input}", "-o", "{output}"],
+        "Compile": ["/usr/bin/g++", "-x", "c++", "-Wall", "-Wextra", "-Wconversion", "-DONLINE_JUDGE", "-O2", "-std=c++20", "{input}", "-o", "{output}"],
         "Execute": ["./{input}"]
     },
     {

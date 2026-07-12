@@ -46,8 +46,6 @@ func (w *Worker) ExecuteChecker(checkerBin []byte, testInputPath, testOutputPath
 
 	result := w.Sandbox.ExecuteCode(checkerBin, checkerLanguage, "", "", "", []string{destInputPath, destOutputPath, destAnswerPath}, checkerExecuteConfig)
 
-	log.Printf("[Worker %d] Checker execution result: %+v", w.BoxID, result)
-
 	if result.IsolateMetadata == nil {
 		return FormatResult(result, "INT")
 	}
@@ -64,7 +62,7 @@ func (w *Worker) ExecuteChecker(checkerBin []byte, testInputPath, testOutputPath
 		return FormatResult(result, "FAIL")
 	}
 
-	log.Printf("[Worker %d] Checker verdict: %s, message: %s and isolate metadata: %v", w.BoxID, status, result.Message, result.IsolateMetadata)
+	log.Printf("[Worker %d] Checker verdict: %s, message: %s.", w.BoxID, status, result.Message)
 
 	finalResult := FormatResult(result, status)
 	finalResult.Message = result.Stderr

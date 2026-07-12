@@ -10,7 +10,7 @@ func (w *Worker) CompileCheckerCode() ([]byte, models.Result) {
 	checkerLanguage := w.Job.ProblemData.CheckerLanguage
 	checkerSource, _ := os.ReadFile(w.Job.ProblemData.GetCheckerSourcePath())
 
-	log.Printf("Compiling checker code with source from %s", w.Job.ProblemData.GetCheckerSourcePath())
+	log.Printf("[Worker %d] Compiling checker code", w.BoxID)
 
 	checkerBin, result := w.Sandbox.CompileCode(
 		checkerSource,
@@ -28,12 +28,16 @@ func (w *Worker) CompileCheckerCode() ([]byte, models.Result) {
 		return nil, FormatResult(result, "INT")
 	}
 
+	log.Printf("[Worker %d] Checker code compiled successfully", w.BoxID)
+
 	return checkerBin, models.Result{}
 }
 
 func (w *Worker) CompileUserCode() ([]byte, models.Result) {
 	userCodeSource := []byte(w.Job.SubmissionData.SourceCode)
 	userCodeLanguage := w.Job.SubmissionData.SourceLanguage
+
+	log.Printf("[Worker %d] Compiling user code", w.BoxID)
 
 	userCodeBin, result := w.Sandbox.CompileCode(userCodeSource, userCodeLanguage, "", nil, GetDefaultConfig())
 	if userCodeBin == nil {
@@ -54,6 +58,8 @@ func (w *Worker) CompileUserCode() ([]byte, models.Result) {
 
 		return nil, FormatResult(result, "CE")
 	}
+
+	log.Printf("[Worker %d] User code compiled successfully", w.BoxID)
 
 	return userCodeBin, models.Result{}
 }

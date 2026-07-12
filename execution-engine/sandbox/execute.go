@@ -1,7 +1,6 @@
 package sandbox
 
 import (
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,8 +27,6 @@ func (s *Sandbox) ExecuteCode(sourceBin []byte, language, stdinFilePath, stdoutF
 	args = append(args, additionalArgs...)
 
 	cmd := exec.Command("isolate", args...)
-
-	log.Printf("Executing cmd %s", cmd.String())
 
 	//initialize inputs
 	if stdinFilePath == "" {

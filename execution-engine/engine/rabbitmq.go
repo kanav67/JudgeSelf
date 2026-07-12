@@ -67,8 +67,6 @@ func (c *RabbitMQConsumer) Consume(ctx context.Context, jobQueue chan<- models.J
 				return nil
 			}
 
-			log.Printf("Received delivery: %s", string(delivery.Body))
-
 			job, err := decode(delivery.Body)
 			if err != nil {
 				log.Printf("Failed to parse job payload: %v", err)
@@ -76,7 +74,7 @@ func (c *RabbitMQConsumer) Consume(ctx context.Context, jobQueue chan<- models.J
 				continue
 			}
 
-			log.Printf("Parsed job: %+v", job)
+			log.Printf("Received submission with id: %s", job.SubmissionData.SubmissionID)
 
 			job.Ack = func() error {
 				return delivery.Ack(false)

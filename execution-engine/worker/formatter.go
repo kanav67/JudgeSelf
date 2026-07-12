@@ -61,6 +61,10 @@ func FormatResult(result *sandbox.Result, status string) models.Result {
 		memory = result.IsolateMetadata.Memory
 		time = result.IsolateMetadata.Time
 	}
+	if(status == "INT"){
+		result.Stdout += "\n\nStderr: " + result.Message
+	}
+
 	return models.Result{
 		Test:          0,
 		Memory:        memory,
