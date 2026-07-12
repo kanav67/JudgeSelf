@@ -3,13 +3,20 @@ package engine
 import (
 	"context"
 	"encoding/json"
-	"execution-engine/models"
-
 	"github.com/redis/go-redis/v9"
 )
 
+type StatusMessage struct {
+	SubmissionID string `json:"submission_id"`
+	ContestID    string `json:"contest_id"` //for ws in contest room
+	Running      bool   `json:"running"`
+	Time         int64  `json:"time"`
+	Memory       int64  `json:"memory"`
+	Status       string `json:"status"`
+}
+
 type RedisPublisher struct {
-	client *redis.Client
+	client  *redis.Client
 	channel string
 }
 
@@ -30,8 +37,8 @@ func (p *RedisPublisher) Close() error {
 	return p.client.Close()
 }
 
-func (p *RedisPublisher) Publish(ctx context.Context, verdict models.Verdict) error {
-	data, err := json.Marshal(verdict)
+func (p *RedisPublisher) Publish(ctx context.Context, msg StatusMessage) error {
+	data, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}

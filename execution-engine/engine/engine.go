@@ -14,7 +14,7 @@ type Engine struct {
 	Cache             *Cache
 	RabbitMQClient    *RabbitMQConsumer
 	RabbitMQPublisher *RabbitMQPublisher
-	ReddisPublisher   *RedisPublisher
+	RedisPublisher    *RedisPublisher
 
 	JobQueue chan models.Job
 	Wg       sync.WaitGroup
@@ -66,7 +66,7 @@ func NewEngine() (*Engine, error) {
 		rabbitMQPublisher.Close()
 		return nil, fmt.Errorf("Failed to create redisPublisher: %v", err)
 	}
-	engine.ReddisPublisher = redisPublisher
+	engine.RedisPublisher = redisPublisher
 
 	return engine, nil
 }

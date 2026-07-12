@@ -52,9 +52,9 @@ func Load() Config {
 		RedisAddr:            env("REDIS_ADDR", "redis://localhost:6379"),
 		RedisPassword:        env("REDIS_PASSWORD", ""),
 		RedisDB:              intEnv("REDIS_DB", 0),
+		StatusChannel:        env("REDIS_STATUS_CHANNEL", "status_updates"),
 		CacheDir:             env("CACHE_DIR", "/tmp/execution-engine/"),
 		ProblemCacheTTL:      durationEnv("PROBLEM_CACHE_TTL", 5*time.Minute),
-		StatusChannel:        env("REDIS_STATUS_CHANNEL", "ws_updates"),
 	}
 }
 

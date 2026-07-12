@@ -55,6 +55,7 @@ func (w *Worker) Start(ctx context.Context, jobQueue <-chan models.Job) {
 	for {
 		select {
 		case <-ctx.Done():
+			w.CleanUp()
 			log.Printf("[Worker %d] Shutting down...", w.BoxID)
 			return
 
@@ -62,7 +63,7 @@ func (w *Worker) Start(ctx context.Context, jobQueue <-chan models.Job) {
 			if !ok {
 				log.Printf("[Worker %d] Job queue closed", w.BoxID)
 				return //Channel closed
-			}
+			}	
 			log.Printf("[Worker %d] Received job: %s", w.BoxID, job.SubmissionData.SubmissionID)
 
 			err := w.RunWorker(ctx, &job)
@@ -81,6 +82,8 @@ func (w *Worker) Start(ctx context.Context, jobQueue <-chan models.Job) {
 }
 
 func (w *Worker) RunWorker(ctx context.Context, job *models.Job) error {
+	w.PublishStatusUpdate(ctx, "Running")
+
 	w.LocalDir = filepath.Join(LocalTemp, job.SubmissionData.SubmissionID)
 	err := os.MkdirAll(w.LocalDir, 0755)
 	if err != nil {
@@ -101,7 +104,7 @@ func (w *Worker) RunWorker(ctx context.Context, job *models.Job) error {
 	}
 
 	//if some error occurs treat it as internal error
-	results = w.ExecuteWorker()
+	results = w.ExecuteWorker(ctx)
 
 	//errors relating to saving to db
 	err = w.PostExecute(ctx, results)
@@ -160,11 +163,16 @@ func (w *Worker) PostExecute(ctx context.Context, results []models.Result) error
 		})
 	}
 
+	w.PublishStatusUpdate(ctx, status)
+
 	return nil
 }
 
-// todo use ctx
-func (w *Worker) ExecuteWorker() []models.Result {
+// todo use ctx properly
+func (w *Worker) ExecuteWorker(ctx context.Context) []models.Result {
+
+	w.PublishStatusUpdate(ctx, "Compiling")
+
 	checkerBin, compileResult := w.CompileCheckerCode()
 	if checkerBin == nil {
 		return []models.Result{compileResult}
@@ -192,6 +200,8 @@ func (w *Worker) ExecuteWorker() []models.Result {
 		testInputPath := w.Job.ProblemData.GetTestFilePath(test)
 		testAnswerPath := w.Job.ProblemData.GetAnswerFilePath(test)
 		testOutputPath := w.GetOutputFilePath(test)
+
+		w.PublishStatusUpdate(ctx, fmt.Sprintf("Running on test %d", test))
 
 		internal_userCodeExecuteTime := time.Now()
 		userCodeResult := w.ExecuteUserCode(userCodeBin, testInputPath, testOutputPath)
@@ -236,6 +246,20 @@ func (w *Worker) ExecuteWorker() []models.Result {
 	return results
 }
 
+func (w *Worker) PublishStatusUpdate(ctx context.Context, status string) {
+	msg := engine.StatusMessage{
+		SubmissionID: w.Job.SubmissionData.SubmissionID,
+		ContestID:    w.Job.ProblemData.ContestID,
+		Running:      w.Job.Verdict.Time == 0,
+		Time:         w.Job.Verdict.Time,
+		Memory:       w.Job.Verdict.Memory,
+		Status:       status,
+	}
+	go func() {
+		w.Engine.RedisPublisher.Publish(ctx, msg)
+	}()
+}
+
 func (w *Worker) GetOutputDir() string {
 	return filepath.Join(w.LocalDir, OutputDir)
 }
@@ -253,7 +277,7 @@ func GetDefaultConfig() *sandbox.IsolateConfig {
 	//turns out compilation is memory hungry and can take some time
 	return sandbox.NewIsolateConfig(func(ic *sandbox.IsolateConfig) {
 		ic.MemoryLimit = 2 * 1024 * 1024 // 2 GB
-		ic.TimeLimit = 30.0               // 30 seconds
+		ic.TimeLimit = 30.0              // 30 seconds
 		ic.WallTimeLimit = 31.0          // 31 seconds
 	})
 }
