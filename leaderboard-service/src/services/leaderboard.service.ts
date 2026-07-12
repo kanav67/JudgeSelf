@@ -1,5 +1,6 @@
 import { pgPool } from "../config/postgres";
 import { redisClient } from "../config/redis";
+import { processLiveVerdict } from "./redis.service";
 import { computeUserScores } from "./scoring.service";
 
 export interface LeaderboardRow {
@@ -159,4 +160,29 @@ export const getTotalLeaderboardEntries = async (contestId: string): Promise<num
   }
   totalParticipants = parseInt(res.rows[0].count);
   return totalParticipants;
+}
+
+export const recalculateLiveUserScore = async (contestId: string, userId: string) => {
+  const metadataHashKey = getContestMetadataKey(contestId);
+  await redisClient.hDel(metadataHashKey, userId);
+
+  const submissions = await pgPool.query(
+    `SELECT s.id, s.problem_id, s.status, EXTRACT(EPOCH FROM (s.created_at - (SELECT start_time FROM contests WHERE id = $1)))::INTEGER as submitted_at
+         FROM submissions s
+         JOIN problems p ON s.problem_id = p.id 
+         WHERE p.contest_id = $1 AND s.user_id = $2 AND s.type = 'RATED' 
+         ORDER BY s.created_at ASC`,
+    [contestId, userId]
+  );
+
+  for (const sub of submissions.rows) {
+    await processLiveVerdict({
+      submissionId: sub.id.toString(),
+      contestId,
+      userId,
+      problemId: sub.problem_id,
+      status: sub.status,
+      relativeSubmittedAt: sub.submitted_at
+    });
+  }
 }

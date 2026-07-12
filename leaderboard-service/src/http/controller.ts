@@ -1,8 +1,5 @@
 import type { Request, Response } from 'express';
-import { redisClient } from '../config/redis';
-import { pgPool } from '../config/postgres';
-import { processLiveVerdict } from '../services/redis.service';
-import { getLeaderboardPage, getUserLeaderboardRow } from '../services/leaderboard.service';
+import { recalculateLiveUserScore, getLeaderboardPage, getUserLeaderboardRow } from '../services/leaderboard.service';
 import { executeContestHardFreeze } from '../services/freeze.service';
 
 const firstValue = (value: string | string[] | undefined): string => {
@@ -58,33 +55,13 @@ export async function forceRecalculateUser(req: Request, res: Response): Promise
   const userId = firstValue(req.params.userId);
 
   try {
-    const metadataHashKey = `{contest:${contestId}}:metadata`;
+    //todo check if contest is valid or not and is not currently active
+    await recalculateLiveUserScore(contestId, userId);
 
-    // Clear targeted cache key partition
-    await redisClient.hDel(metadataHashKey, userId);
-
-    // Rebuild partition explicitly out of base structural queries
-    const submissions = await pgPool.query(
-      `SELECT id, problem_id, status, EXTRACT(EPOCH FROM (created_at - (SELECT start_time FROM contests WHERE id = $1)))::INTEGER as submitted_at
-       FROM submissions WHERE contest_id = $1 AND user_id = $2 AND type = 'rated' ORDER BY created_at ASC`,
-      [contestId, userId]
-    );
-
-    for (const sub of submissions.rows) {
-      await processLiveVerdict({
-        submissionId: sub.id,
-        contestId,
-        userId,
-        problemId: sub.problem_id,
-        status: sub.status,
-        relativeSubmittedAt: sub.submitted_at
-      });
-    }
-
-    res.json({ status: 'Success', message: 'Target profile updated dynamically' });
+    res.json({ status: 'Success', message: 'User leaderboard updated successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Recalculation routine tracking anomaly encountered' });
+    res.status(500).json({ error: 'Failed to recalculate user' });
   }
 }
 

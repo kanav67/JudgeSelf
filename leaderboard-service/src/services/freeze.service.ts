@@ -1,5 +1,6 @@
 import { pgPool } from '../config/postgres';
 import { redisClient } from '../config/redis';
+import { getContestLeaderboardKey, getContestMetadataKey } from './leaderboard.service';
 import type { UserContestMetadata } from './redis.service';
 import { computeUserScores } from './scoring.service';
 
@@ -18,10 +19,11 @@ export async function executeContestHardFreeze(contestId: string): Promise<void>
     await client.query('BEGIN');
 
     const submissionsRes: { rows: SubmissionRow[] } = await client.query(
-      `SELECT id, user_id, problem_id, status, EXTRACT(EPOCH FROM (created_at - (SELECT start_time FROM contests WHERE id = $1)))::INTEGER as submitted_at
-       FROM submissions 
-       WHERE contest_id = $1 AND type = 'RATED'
-       ORDER BY created_at ASC`,
+      `SELECT s.id, s.user_id, s.problem_id, s.status, EXTRACT(EPOCH FROM (s.created_at - (SELECT start_time FROM contests WHERE id = $1)))::INTEGER as submitted_at
+       FROM submissions s
+       JOIN problems p ON s.problem_id = p.id
+       WHERE p.contest_id = $1 AND s.type = 'RATED'
+       ORDER BY s.created_at ASC`,
       [contestId]
     );
 
@@ -78,13 +80,11 @@ export async function executeContestHardFreeze(contestId: string): Promise<void>
     await client.query(`UPDATE contests SET leaderboard_frozen = TRUE WHERE id = $1`, [contestId]);
 
     await client.query('COMMIT');
-    console.log(`contest ${contestId} leaderboard has been frozen`);
+    console.log(`Leaderboard frozen for contest: ${contestId}`);
 
     //cleanup Redis keys to free memory
-    const metadataHashKey = `{contest:${contestId}}:metadata`;
-    const rankZsetKey = `{contest:${contestId}}:ranks`;
-    await redisClient.unlink([metadataHashKey, rankZsetKey]);
-    console.log(`Freed memory from redis for contest: ${contestId}`);
+    const freedKeys = await redisClient.unlink([getContestMetadataKey(contestId), getContestLeaderboardKey(contestId)]);
+    console.log(`Freed ${freedKeys} keys from redis for contest: ${contestId}`);
 
   } catch (err: any) {
     await client.query('ROLLBACK');

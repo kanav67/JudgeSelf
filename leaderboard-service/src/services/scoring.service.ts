@@ -1,5 +1,5 @@
 import { env } from '../config/env';
-import type { UserContestMetadata } from './redis.service';
+import type { ProblemProblemState, UserContestMetadata } from './redis.service';
 
 export interface UserScore {
   score: number; //decides the rank in the leaderboard
@@ -9,6 +9,7 @@ export interface UserScore {
     solved: boolean;
     wrongAttemptsBeforeAC: number;
     scoreTime: number;
+    submissions: ProblemProblemState
   }>;
 }
 
@@ -44,7 +45,7 @@ export function computeUserScores(metadata: UserContestMetadata): UserScore {
       const penaltyForProblem = scoreTime + (wrongAttemptsBeforeAC * 20 * 60);
       totalPenalty += penaltyForProblem;
     }
-    details[probId] = { solved: isSolved, wrongAttemptsBeforeAC, scoreTime };
+    details[probId] = { solved: isSolved, wrongAttemptsBeforeAC, scoreTime, submissions: sorted };
   }
 
   const compositeScore = (solvedCount * env.penaltyOffset) - totalPenalty;
