@@ -16,7 +16,7 @@ const generateUUID = () => {
   return crypto.randomUUID();
 };
 
-export const importProblem = async (problemUrl: string) => {
+export const importProblem = async (problemUrl: string, contestId: number, problemIndex?: number) => {
   const problemId = generateUUID();
 
   const workDir = path.join(TMP_BASE_DIR, problemId);
@@ -48,6 +48,8 @@ export const importProblem = async (problemUrl: string) => {
 
     const res = await createProblemRecord({
       id: problemId,
+      contestId: contestId,
+      problemIndex: problemIndex,
       polygonId: parsedData.polygonUrl,
       polygonVersion: parsedData.polygonRevision,
 

@@ -2,6 +2,8 @@ import { pool } from '../config/postgres.js';
 
 type ProblemRecord = {
   id: string;
+  contestId: number;
+  problemIndex?: number;
   polygonId: string;
   polygonVersion: number;
 
@@ -35,6 +37,7 @@ export const createProblemRecord = async (problemRecord: ProblemRecord) => {
     INSERT INTO problems (
       id,
       contest_id,
+      problem_index,
       polygon_id,
       polygon_version,
 
@@ -60,12 +63,14 @@ export const createProblemRecord = async (problemRecord: ProblemRecord) => {
       checker_language,
       problem_zip_key
       )
-      VALUES ($1::uuid, 1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+      VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
     RETURNING *
   `;
 
   const values = [
     problemRecord.id,
+    problemRecord.contestId,
+    problemRecord.problemIndex,
     problemRecord.polygonId,
     problemRecord.polygonVersion,
 

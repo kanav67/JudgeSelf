@@ -40,7 +40,25 @@ export const generateTestCases = async (workDir: string) => {
   console.log(`Took ${Date.now() - startedAt}ms to generate test cases in ${workDir}`);
 };
 
+export const fixTestCases = async (workDir: string, testSetName: string) => {
+  const testsDir = path.join(workDir, testSetName);
+
+  const entries = await fs.readdir(testsDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const newName = entry.name.replace(/^0+/, '');
+
+    if (newName === entry.name) continue;
+
+    await fs.rename(path.join(testsDir, entry.name), path.join(testsDir, newName));
+  }
+}
+
 export const validateTestCases = async (workDir: string, testSetName: string, testCount: number) => {
+  //todo this is very hacky temp fix, for proper way get the path pattern from the xml file
+  if(testCount < 10) await fixTestCases(workDir, testSetName);
+
   const testsDir = path.join(workDir, testSetName);
 
   const entries = await fs.readdir(testsDir, { withFileTypes: true });
