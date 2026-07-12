@@ -25,12 +25,12 @@ func LoadConfig() Config {
 	return Config{
 		PostgresDSN:      env("POSTGRES_DSN", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"),
 		RabbitURL:        env("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
-		RabbitQueue:      env("RABBITMQ_QUEUE", "submissions"),
+		RabbitQueue:      env("RABBITMQ_QUEUE_SUBMISSIONS", "submissions"),
 		RedisAddr:        env("REDIS_ADDR", "redis://localhost:6379"),
 		RedisPassword:    env("REDIS_PASSWORD", ""),
 		RedisDB:          intEnv("REDIS_DB", 0),
 		StatusChannel:    env("REDIS_STATUS_CHANNEL", "ws_updates"),
-		JwtSecret:        env("JWT_SECRET", "default_access"),
+		JwtSecret:        env("JWT_ACCESS_TOKEN_SECRET", "default_access"),
 	}
 }
 

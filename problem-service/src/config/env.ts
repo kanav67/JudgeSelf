@@ -10,7 +10,7 @@ const toBoolean = (value: any, defaultValue = false) => {
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: Number(process.env.PORT ?? 3000),
-  databaseUrl: process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/problem_service',
+  databaseUrl: process.env.POSTGRES_DSN ?? 'postgresql://postgres:postgres@localhost:5432/postgres',
   pgPoolMax: Number(process.env.PGPOOL_MAX ?? 10),
   polygonBaseUrl: process.env.POLYGON_BASE_URL ?? 'https://codeforces.com',
   isolateBinary: process.env.ISOLATE_BINARY ?? 'isolate',
