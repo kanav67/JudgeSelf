@@ -7,8 +7,6 @@ import { env } from './config/env.js';
 import { initializeTmpDir } from './services/problem-import.service.js';
 import { checkHealth as checkPostgres } from './config/postgres.js';
 import { checkHealth as checkS3 } from './config/s3.js';
-import { InitRedis } from './config/redis.js';
-import { Subscribe } from './services/status.service.js';
 
 const app = express();
 
@@ -23,9 +21,6 @@ const startServer = async () => {
 
   await checkPostgres();
   await checkS3();
-  await InitRedis();
-
-  await Subscribe();
 
   app.listen(env.port, () => {
     console.log(`Problem service listening on port ${env.port}`);
