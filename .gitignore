@@ -2,3 +2,4 @@ testing
 tmp
 execution-engine/execution-engine
 .env
+docker-image*
