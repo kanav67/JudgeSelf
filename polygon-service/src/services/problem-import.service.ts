@@ -1,14 +1,14 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { env } from '../config/env.js';
+import { env } from '../config/env';
 
-import { fetchProblemZip } from './polygon/polygon.service.js';
-import { parseProblemXML } from './polygon/polygon-xml.service.js';
-import { extractProblemStatement } from './statement.service.js';
-import { validateTestCases } from './polygon/polygon-tests.service.js';
-import { zipProblemFiles } from './archive.service.js';
-import { uploadToS3 } from './s3.service.js';
-import { createProblemRecord } from '../repositories/problems.repository.js';
+import { fetchProblemZip } from './polygon/polygon.service';
+import { parseProblemXML } from './polygon/polygon-xml.service';
+import { extractProblemStatement } from './statement.service';
+import { validateTestCases } from './polygon/polygon-tests.service';
+import { zipProblemFiles } from './archive.service';
+import { uploadToS3 } from './s3.service';
+import { createProblemRecord } from '../repositories/problems.repository';
 
 const TMP_BASE_DIR = env.polygonTmpDir || '/tmp/polygon/';
 

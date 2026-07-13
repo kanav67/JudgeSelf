@@ -1,6 +1,6 @@
-import { env } from '../../config/env.js';
-import { unzipFile } from '../archive.service.js';
-import { generateTestCases } from './polygon-tests.service.js';
+import { env } from '../../config/env';
+import { unzipFile } from '../archive.service';
+import { generateTestCases } from './polygon-tests.service';
 
 import path from 'path';
 import fs from 'fs/promises';

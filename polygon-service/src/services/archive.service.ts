@@ -2,7 +2,7 @@ import path from 'path';
 import { createWriteStream } from 'fs';
 import unzipper from 'unzipper';
 import { ArchiverError, ZipArchive } from 'archiver';
-import { ParsedProblemXML } from './polygon/polygon-xml.types.js';
+import { ParsedProblemXML } from './polygon/polygon-xml.types';
 
 export const unzipFile = async (zipFilePath: string, outputDirectory: string) => {
   try {

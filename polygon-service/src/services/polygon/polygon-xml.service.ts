@@ -1,6 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import path from 'path';
-import { forceArrayPaths, ParsedProblemXML, PolygonProblemData } from './polygon-xml.types.js';
+import { forceArrayPaths, ParsedProblemXML, PolygonProblemData } from './polygon-xml.types';
 
 export const parseProblemXML = async (xmlContent: string) => {
   const parser = new XMLParser({
