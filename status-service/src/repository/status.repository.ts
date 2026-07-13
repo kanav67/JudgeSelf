@@ -1,4 +1,4 @@
-import { pool } from "../../../problem-service/src/config/postgres.js";
+import { pool } from "../config/postgres";
 
 export interface SubmissionRow {
   submissionId: string;

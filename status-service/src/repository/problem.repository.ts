@@ -1,5 +1,5 @@
-import { pool } from "../../../problem-service/src/config/postgres.js";
-import type { SubmissionRow } from "./status.repository.js";
+import { pool } from "../config/postgres";
+import type { SubmissionRow } from "./status.repository";
 
 export const getProblemSubmissionsFromDB = async (problemId: string, userId?: string, page: number = 1, limit?: number): Promise<SubmissionRow[]> => {
   var query = `SELECT s.id, s.user_id, s.problem_id, s.status, s.time, s.memory, s.created_at, p.contest_id, p.problem_index
