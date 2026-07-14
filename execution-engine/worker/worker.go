@@ -82,6 +82,8 @@ func (w *Worker) Start(ctx context.Context, jobQueue <-chan models.Job) {
 }
 
 func (w *Worker) RunWorker(ctx context.Context, job *models.Job) error {
+	w.Job = job
+
 	w.PublishStatusUpdate(ctx, "Running")
 
 	w.LocalDir = filepath.Join(LocalTemp, job.SubmissionData.SubmissionID)
@@ -89,8 +91,6 @@ func (w *Worker) RunWorker(ctx context.Context, job *models.Job) error {
 	if err != nil {
 		return fmt.Errorf("Failed to create localDir directory: %w", err)
 	}
-
-	w.Job = job
 
 	w.Sandbox.ReInitialize()
 
@@ -249,12 +249,23 @@ func (w *Worker) ExecuteWorker(ctx context.Context) []models.Result {
 func (w *Worker) PublishStatusUpdate(ctx context.Context, status string) {
 	msg := engine.StatusMessage{
 		SubmissionID: w.Job.SubmissionData.SubmissionID,
-		ContestID:    w.Job.ProblemData.ContestID,
-		Running:      w.Job.Verdict.Time == 0,
-		Time:         w.Job.Verdict.Time,
-		Memory:       w.Job.Verdict.Memory,
+		Running:      true,
 		Status:       status,
 	}
+
+	if w.Job.ProblemData != nil {
+		msg.ContestID = w.Job.ProblemData.ContestID
+	}
+
+	if w.Job.Verdict != nil {
+		msg.Time = w.Job.Verdict.Time
+		msg.Memory = w.Job.Verdict.Memory
+
+		if w.Job.Verdict.Status == status {
+			msg.Running = false
+		}
+	}
+
 	go func() {
 		w.Engine.RedisPublisher.Publish(ctx, msg)
 	}()
