@@ -8,6 +8,6 @@ RUN bun install --frozen-lockfile --production
 COPY src ./src
 COPY tsconfig.json ./
 
-EXPOSE 3000
+EXPOSE 8000
 
 CMD ["bun", "run", "src/index.ts"]

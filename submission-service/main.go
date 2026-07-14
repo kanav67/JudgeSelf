@@ -74,11 +74,16 @@ func main() {
 	app := &App{Config: &cfg, DB: db, RabbitMQPublisher: rmq, Languages: LoadLanguages()}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
 	mux.HandleFunc("GET /languages", app.HandleLanguages)
 	mux.HandleFunc("POST /submit", AuthMiddleware(app.HandleSubmit, []byte(cfg.JwtSecret)))
 
-	log.Println("API Server listening on :8080...")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Printf("API Server listening on :%s...", cfg.Port)
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, mux))
 }
 
 func LoadLanguages() []string {

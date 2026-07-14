@@ -2,9 +2,10 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: shared-rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+    env_file:
+      - ./.env
+    volumes:
+      - shared_rabbitmq_data:/var/lib/rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -25,50 +26,18 @@ services:
       timeout: 5s
       retries: 10
 
-  # execution-engine:
-  #   build:
-  #     context: .
-  #     dockerfile: execution-engine/Dockerfile
-  #   container_name: execution-engine
-  #   privileged: true
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     minio-init:
-  #       condition: service_completed_successfully
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   environment:
-  #     POSTGRES_DSN: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
-  #     RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
-  #     RABBITMQ_QUEUE: submissions
-  #     REDIS_ADDR: redis:6379
-  #     REDIS_DB: "0"
-  #     WORKER_COUNT: "4"
-  #     HTTP_ADDR: :8080
-  #     CACHE_DIR: /var/lib/execution-engine/cache
-  #     BUNDLE_ROOT: /var/lib/execution-engine/bundles
-  #   ports:
-  #     - "8080:8080"
-  #   volumes:
-  #     - execution_engine_cache:/var/lib/execution-engine
-
   postgres:
     image: postgres:16-alpine
     container_name: shared-postgres
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+    env_file:
+      - ./.env
     ports:
       - "5432:5432"
     volumes:
       - shared_postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -77,16 +46,18 @@ services:
     image: minio/minio:latest
     container_name: shared-minio
     command: server /data --console-address ":9001"
+    env_file:
+      - ./.env
     environment:
-      MINIO_ROOT_USER: problem-service
-      MINIO_ROOT_PASSWORD: problem-service-secret
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY}
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - shared_minio_data:/data
     healthcheck:
-      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/9000"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -94,16 +65,155 @@ services:
   minio-init:
     image: minio/mc:latest
     container_name: shared-minio-init
+    env_file:
+      - ./.env
     depends_on:
       minio:
         condition: service_healthy
     entrypoint: /bin/sh -c
     command: >
-      "mc alias set local http://minio:9000 problem-service problem-service-secret &&
-      mc mb --ignore-existing local/problem-service-artifacts &&
-      mc anonymous set none local/problem-service-artifacts"
+      "mc alias set local http://minio:9000 ${S3_ACCESS_KEY_ID} ${S3_SECRET_ACCESS_KEY} &&
+      mc mb --ignore-existing local/${S3_BUCKET} &&
+      mc anonymous set none local/${S3_BUCKET}"
+
+  main-api:
+    build:
+      context: ./main-api
+      dockerfile: Dockerfile
+    container_name: main-api
+    env_file:
+      - ./.env
+    environment:
+      PORT: ${MAIN_API_PORT}
+    ports:
+      - "${MAIN_API_PORT:-8000}:${MAIN_API_PORT:-8000}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bun -e \"fetch('http://127.0.0.1:' + process.env.PORT + '/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  submission-service:
+    build:
+      context: ./submission-service
+      dockerfile: Dockerfile
+    container_name: submission-service
+    env_file:
+      - ./.env
+    environment:
+      PORT: ${SUBMISSION_SERVICE_PORT}
+    ports:
+      - "${SUBMISSION_SERVICE_PORT:-8001}:${SUBMISSION_SERVICE_PORT:-8001}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$$PORT/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  leaderboard-service:
+    build:
+      context: ./leaderboard-service
+      dockerfile: Dockerfile
+    container_name: leaderboard-service
+    env_file:
+      - ./.env
+    environment:
+      PORT: ${LEADERBOARD_SERVICE_PORT}
+    ports:
+      - "${LEADERBOARD_SERVICE_PORT:-8002}:${LEADERBOARD_SERVICE_PORT:-8002}"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bun -e \"fetch('http://127.0.0.1:' + process.env.PORT + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  polygon-service:
+    build:
+      context: ./polygon-service
+      dockerfile: Dockerfile
+    container_name: polygon-service
+    env_file:
+      - ./.env
+    environment:
+      PORT: ${POLYGON_SERVICE_PORT}
+    ports:
+      - "${POLYGON_SERVICE_PORT:-8003}:${POLYGON_SERVICE_PORT:-8003}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bun -e \"fetch('http://127.0.0.1:' + process.env.PORT + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  status-service:
+    build:
+      context: ./status-service
+      dockerfile: Dockerfile
+    container_name: status-service
+    env_file:
+      - ./.env
+    environment:
+      PORT: ${STATUS_SERVICE_PORT}
+    ports:
+      - "${STATUS_SERVICE_PORT:-8004}:${STATUS_SERVICE_PORT:-8004}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bun -e \"fetch('http://127.0.0.1:' + process.env.PORT + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
 volumes:
   shared_postgres_data:
   shared_minio_data:
-  execution_engine_cache:
+  shared_rabbitmq_data:
