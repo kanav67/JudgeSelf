@@ -15,9 +15,7 @@ authRoutes.post('/login', asyncHandler(AuthController.loginUser));
 authRoutes.post('/signup', asyncHandler(AuthController.registerUser));
 authRoutes.get('/refresh-token', asyncHandler(AuthController.refreshToken));
 
-authRoutes.use(authenticate);
-
-authRoutes.get('/logout', asyncHandler(AuthController.logoutUser));
-authRoutes.post('/changepassword', asyncHandler(AuthController.changePassword));
+authRoutes.get('/logout', authenticate, asyncHandler(AuthController.logoutUser));
+authRoutes.post('/changepassword', authenticate,asyncHandler(AuthController.changePassword));
 
 export { authRoutes };

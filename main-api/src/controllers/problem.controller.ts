@@ -47,12 +47,13 @@ const addProblem = async (req: Request, res: Response) => {
 }
 
 const getProblem = async (req: Request, res: Response) => {
-  const { contestId, problemIndex } = req.params;
+  const contestId = firstValue(req.params.contestId);
+  const problemIndex = firstValue(req.params.problemIndex);
 
-  if (!contestId || contestId != String(contestId)) {
+  if (!contestId) {
     return res.status(400).json({ message: "Valid Contest Id is required" });
   }
-  if (!problemIndex || problemIndex != String(problemIndex)) {
+  if (!problemIndex) {
     return res.status(400).json({ message: "Valid Problem Index is required" });
   }
 
@@ -66,14 +67,13 @@ const getProblem = async (req: Request, res: Response) => {
 }
 
 const getProblemById = async (req: Request, res: Response) => {
-  const problemId = req.params.id;
+  const problemId = firstValue(req.params.problemId);
 
-  if (!problemId || problemId != String(problemId)) {
+  if (!problemId) {
     return res.status(400).json({ message: "Valid Problem Id is required" });
   }
 
   const contest = await ProblemsRepository.getProblemById(problemId);
-
   if (!contest) {
     return res.status(404).json({ message: "Invalid Problem Id" });
   }

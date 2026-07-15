@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
+	// "time"
 )
 
 type Worker struct {
@@ -203,9 +203,7 @@ func (w *Worker) ExecuteWorker(ctx context.Context) []models.Result {
 
 		w.PublishStatusUpdate(ctx, fmt.Sprintf("Running on test %d", test))
 
-		internal_userCodeExecuteTime := time.Now()
 		userCodeResult := w.ExecuteUserCode(userCodeBin, testInputPath, testOutputPath)
-		log.Printf("[Worker %d] Internal User code execution time for test %d: %v", w.BoxID, test, time.Since(internal_userCodeExecuteTime))
 
 		if userCodeResult.Status != "AC" {
 			userCodeResult.Test = test

@@ -3,7 +3,6 @@ package worker
 import (
 	"execution-engine/models"
 	"execution-engine/sandbox"
-	"log"
 	"path/filepath"
 )
 
@@ -61,8 +60,6 @@ func (w *Worker) ExecuteChecker(checkerBin []byte, testInputPath, testOutputPath
 		result.Message = "Checker Execution failed, (Checker returned unexpected status: " + status + ") \n" + IsolateMetadataToString(result.IsolateMetadata)
 		return FormatResult(result, "FAIL")
 	}
-
-	log.Printf("[Worker %d] Checker verdict: %s, message: %s.", w.BoxID, status, result.Message)
 
 	finalResult := FormatResult(result, status)
 	finalResult.Message = result.Stderr

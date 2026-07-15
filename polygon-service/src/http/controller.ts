@@ -6,11 +6,14 @@ export const createProblemImport = async (request: Request, response: Response) 
   try {
     const { polygonUrl, contestId, problemIndex } = request.body;
     if (!polygonUrl) {
-    return response.status(400).json({ message: 'polygonUrl is required' });
-  }
-
-  const problem = await importProblem(polygonUrl, contestId, problemIndex);
-  response.status(201).json({ result: problem });
+      return response.status(400).json({ message: 'polygonUrl is required' });
+    }
+    if (!contestId) {
+      return response.status(400).json({ message: 'contestId is required' });
+    }
+    
+    const problem = await importProblem(polygonUrl, contestId, problemIndex);
+    response.status(201).json({ result: problem });
 } catch (error) {
     console.error('Error importing problem:', error);
     response.status(500).json({ message: 'Internal server error' });
