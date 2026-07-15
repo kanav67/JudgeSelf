@@ -1,5 +1,5 @@
 import { pool } from '../config/postgres.js';
-import type { ProblemRecord } from './problems.repository.js';
+import { ProblemsRepository, type ProblemRecord } from './problems.repository.js';
 
 export type ContestData = {
   id: string;
@@ -32,37 +32,12 @@ const getContestById = async (id: string, includeProblemData: boolean) : Promise
   
   const contest: ContestData = rows[0];
   if (includeProblemData) {
-    contest.problems = await getProblemsDataByContestId(id);
+    contest.problems = await ProblemsRepository.getProblemsDataByContestId(id);
   }
   return contest;
 };
 
-const getProblemsDataByContestId = async (contestId: string) : Promise<ProblemRecord[]> => {
-  const query = `
-    SELECT 
-    id,
-
-    name,
-
-    memory_limit,
-    time_limit,
-    test_count,
-
-    input_type,
-    output_type,
-    author_name,
-
-    FROM problems
-    WHERE contest_id = $1::uuid;
-  `;
-  const values = [contestId];
-
-  const { rows } = await pool.query(query, values);
-  return rows;
-}
-
 export const ContestRepository = {
   createContest,
   getContestById,
-  getProblemsDataByContestId,
 };

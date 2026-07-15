@@ -8,22 +8,32 @@ import { firstValue } from "../utils/req-extract";
 
 const addProblem = async (req: Request, res: Response) => {
   const userId = (req as AuthenticatedRequest).user.id;
-  const contestId = firstValue(req.params.id);
+  const contestId = firstValue(req.params.contestId);
+  const problemIndex = firstValue(req.body.problemIndex);
+  const polygonUrl = firstValue(req.body.polygonUrl);
+
   if (!contestId) {
     return res.status(400).json({ message: "Valid Contest Id is required" });
   }
+  if (!problemIndex) {
+    return res.status(400).json({ message: "Valid Problem Index is required" });
+  }
+  if (!polygonUrl) {
+    return res.status(400).json({ message: "Valid Polygon Url is required" });
+  }
 
-  const contest = await ContestRepository.getContestById(contestId, false);
-
+  const contest = await ContestRepository.getContestById(contestId, true);
   if (!contest) {
     return res.status(404).json({ message: "Invalid Contest Id" });
   }
-
   if (contest.owner_id !== userId) {
     return res.status(403).json({ message: "You are not authorized to add problems to this contest" });
   }
 
-  const { polygonUrl } = req.body;
+  const existingIndex = contest.problems?.find((problem) => problem.problem_index === problemIndex);
+  if (existingIndex) {
+    return res.status(400).json({ message: "Problem with this index already exists" });
+  }
 
   const response = await proxyFetch(`${env.polygonServiceUrl}/api/problems/import`, {
     method: "POST",

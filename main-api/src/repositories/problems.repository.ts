@@ -2,6 +2,9 @@ import { pool } from '../config/postgres.js';
 
 export type ProblemRecord = {
   id: string;
+  contest_id: string;
+  problem_index: string;
+
   polygonId: string;
   polygonVersion: number;
 
@@ -32,6 +35,8 @@ export type ProblemRecord = {
 const problemQuery =
   `SELECT 
     id,
+    contest_id,
+    problem_index,
 
     name,
     statement,
@@ -48,7 +53,7 @@ const problemQuery =
 
     input_type,
     output_type,
-    author_name,
+    author_name
 
     FROM problems`
 
@@ -62,7 +67,13 @@ const getProblemByContestIdAndIndex = async (contestId: string, problemIndex: st
   return rows[0] ?? null;
 }
 
+const getProblemsDataByContestId = async (contestId: string) : Promise<ProblemRecord[]> => {
+  const { rows } = await pool.query(problemQuery + ' WHERE contest_id = $1::uuid', [contestId]);
+  return rows;
+}
+
 export const ProblemsRepository = {
   getProblemById,
   getProblemByContestIdAndIndex,
+  getProblemsDataByContestId,
 };

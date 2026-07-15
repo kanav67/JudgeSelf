@@ -8,7 +8,9 @@ import { ImageController } from '../controllers/images.controller.js';
 const contestRoutes = express.Router();
 
 contestRoutes.post('/create', authenticate, ContestController.createContest);
-contestRoutes.get('/:id', ContestController.getContest);
+contestRoutes.get('/:contestId', ContestController.getContest);
+
+contestRoutes.post('/:contestId/add', authenticate, asyncHandler(ProblemController.addProblem));
 
 //deleted problems
 contestRoutes.get('/:contestId/hidden/:problemId', asyncHandler(ProblemController.getProblemById));
