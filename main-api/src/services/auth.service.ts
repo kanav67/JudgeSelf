@@ -10,6 +10,7 @@ const ACCESS_TOKEN_EXPIRATION = '5m';
 export const REFRESH_TOKEN_EXPIRATION = '7d';
 
 interface LoginResponse {
+    userId: string;
     accessToken: string;
     refreshToken: string;
 }
@@ -100,6 +101,7 @@ const loginUser = async (user: UserData, password: string): Promise<LoginRespons
     });
 
     return {
+        userId: user.id,
         accessToken,
         refreshToken
     }

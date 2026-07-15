@@ -27,4 +27,8 @@ export const env = {
   s3SecretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? 'problem-service-secret',
   s3Bucket: process.env.S3_BUCKET ?? 'problem-service-artifacts',
   s3ForcePathStyle: toBoolean(process.env.S3_FORCE_PATH_STYLE, true),
+
+  redisAddr: process.env.REDIS_ADDR ?? "redis://localhost:6379",
+  redisPassword: process.env.REDIS_PASSWORD ?? "",
+  redisDB: Number(process.env.REDIS_DB) ?? 0,
 };

@@ -1,8 +1,9 @@
-import type { Request, Response } from 'express';
+import { request, type Request, type Response } from 'express';
 
-import type { DecodedToken } from '../middleware/auth';
+import type { AuthenticatedRequest, DecodedToken } from '../middleware/auth';
 import { UserRepository } from '../repositories/user.repository';
 import { AuthService, REFRESH_TOKEN_EXPIRATION } from '../services/auth.service';
+import { redisClient } from '../config/redis';
 
 const loginUser = async (request: Request, response: Response) => {
   const { username, password } = request.body;
@@ -24,7 +25,11 @@ const loginUser = async (request: Request, response: Response) => {
     return response.status(401).json({ error: 'Invalid credentials' });
   }
 
-  //todo save refresh token to redis/database for future validation and revocation if needed
+  //only allow 1 device
+  await redisClient.set(`refreshToken:${loginResponse.userId}`, loginResponse.refreshToken, {
+    EX: parseToMilliseconds(REFRESH_TOKEN_EXPIRATION) / 1000,
+  });
+
   //refresh token as cookie
   //ensure to make the same changes in this as in refreshToken function
   response.cookie('refreshToken', loginResponse.refreshToken, {
@@ -37,8 +42,14 @@ const loginUser = async (request: Request, response: Response) => {
   return response.status(200).json({ accessToken: loginResponse.accessToken });
 };
 
-const logoutUser = async (_request: Request, response: Response) => {
+const logoutUser = async (request: Request, response: Response) => {
   //clear refresh token cookie
+  const redisKey = `refreshToken:${(request as AuthenticatedRequest).user.id}`;
+  
+  if(await redisClient.get(redisKey)) {
+    await redisClient.del(redisKey);
+  }
+
   response.clearCookie('refreshToken', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -98,6 +109,15 @@ const changePassword = async (request: Request, response: Response) => {
 
 const refreshToken = async (request: Request, response: Response) => {
   const refreshToken = request.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return response.status(401).json({ error: 'Refresh token is required' });
+  }
+
+  const redisRefreshToken = await redisClient.get(`refreshToken:${(request as AuthenticatedRequest).user.id}`);
+  if (!redisRefreshToken || redisRefreshToken !== refreshToken) {
+    return response.status(401).json({ error: 'Invalid refresh token' });
+  }
 
   const { accessToken, err } = await AuthService.refreshAccessToken(refreshToken);
 
