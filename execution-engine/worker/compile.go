@@ -1,12 +1,28 @@
 package worker
 
 import (
+	"context"
 	"execution-engine/models"
 	"log"
 	"os"
 )
 
 func (w *Worker) CompileCheckerCode() ([]byte, models.Result) {
+	cacheItem, _ := w.Engine.Cache.S3Cache.GetOrLoad(context.Background(), *w.Job.ProblemData)
+	cacheItem.Mu.RLock()
+	cachedCheckerBin := cacheItem.CompiledBin
+	cacheItem.Mu.RUnlock()
+
+	if cachedCheckerBin != nil {
+		return cachedCheckerBin, models.Result{}
+	}
+	
+	cacheItem.Mu.Lock()
+	if cacheItem.CompiledBin != nil {
+		cacheItem.Mu.Unlock()
+		return cacheItem.CompiledBin, models.Result{}
+	}
+
 	checkerLanguage := w.Job.ProblemData.CheckerLanguage
 	checkerSource, _ := os.ReadFile(w.Job.ProblemData.GetCheckerSourcePath())
 
@@ -29,6 +45,9 @@ func (w *Worker) CompileCheckerCode() ([]byte, models.Result) {
 	}
 
 	log.Printf("[Worker %d] Checker code compiled successfully", w.BoxID)
+
+	cacheItem.CompiledBin = checkerBin
+	cacheItem.Mu.Unlock()
 
 	return checkerBin, models.Result{}
 }

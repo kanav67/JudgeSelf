@@ -31,9 +31,15 @@ type DbCache struct {
 	DbClient *PostgresClient
 }
 
+type cacheS3Item struct {
+	Mu          sync.RWMutex
+	Path        string
+	CompiledBin []byte
+}
+
 type S3Cache struct {
 	mu       sync.RWMutex
-	store    map[string]string
+	store    map[string]*cacheS3Item
 	S3Client *S3Client
 }
 
@@ -45,7 +51,7 @@ type Cache struct {
 func NewCache(DbClient *PostgresClient, S3Client *S3Client) *Cache {
 	c := &Cache{
 		DbCache: &DbCache{store: make(map[string]cacheDbItem), ttl: 5 * time.Minute, DbClient: DbClient},
-		S3Cache: &S3Cache{store: make(map[string]string), S3Client: S3Client},
+		S3Cache: &S3Cache{store: make(map[string]*cacheS3Item), S3Client: S3Client},
 	}
 
 	initCleanup()
@@ -66,12 +72,12 @@ func initCleanup() {
 	os.MkdirAll(TmpDir, 0755)
 }
 
-//this implements quite a complex logic
-//so 1st it runs on periodic basis and checks if the number of items in the S3 cache (since it is the largest) is greater than the threshold
-//If it is, it will check the DbCache for expired items and remove them from the DbCache
-//Then it will check the S3Cache for items that are either not present in the DbCache or are older versions of the items present in the DbCache and remove them from the S3Cache
-//Now as a precaution before removing items from db cache we add a buffer time of 5 minutes to ensure the cache is freed by any running processes before it is removed from the cache
-//in case some new process starts using the cache item, the db cache will be refreshed and hence s3 cache will not be removed in next cleanup
+// this implements quite a complex logic
+// so 1st it runs on periodic basis and checks if the number of items in the S3 cache (since it is the largest) is greater than the threshold
+// If it is, it will check the DbCache for expired items and remove them from the DbCache
+// Then it will check the S3Cache for items that are either not present in the DbCache or are older versions of the items present in the DbCache and remove them from the S3Cache
+// Now as a precaution before removing items from db cache we add a buffer time of 5 minutes to ensure the cache is freed by any running processes before it is removed from the cache
+// in case some new process starts using the cache item, the db cache will be refreshed and hence s3 cache will not be removed in next cleanup
 func cleanCache(c *Cache) {
 	now := time.Now()
 
@@ -109,10 +115,10 @@ func cleanCache(c *Cache) {
 		key := strings.Split(k, "_")[0]
 		version, _ := strconv.Atoi(strings.Split(k, "_")[1])
 
-		//delete if not present in the dbcache or is an older versions 
+		//delete if not present in the dbcache or is an older versions
 		if !slices.Contains(validKeys, key) || version < latestS3Keys[key] {
 			delete(c.S3Cache.store, k)
-			os.RemoveAll(v)
+			os.RemoveAll(v.Path)
 			cnt++
 		}
 	}
@@ -125,11 +131,11 @@ func (c *Cache) GetOrLoad(ctx context.Context, problemID string) (models.Problem
 	if err != nil {
 		return models.ProblemData{}, err
 	}
-	localProblemCachePath, err := c.S3Cache.GetOrLoad(ctx, problemData)
+	localProblemCacheItem, err := c.S3Cache.GetOrLoad(ctx, problemData)
 	if err != nil {
 		return models.ProblemData{}, err
 	}
-	problemData.LocalProblemDir = localProblemCachePath
+	problemData.LocalProblemDir = localProblemCacheItem.Path
 
 	return problemData, nil
 }
@@ -167,7 +173,7 @@ func (c *DbCache) GetOrLoad(ctx context.Context, problemId string) (models.Probl
 	return problemData, nil
 }
 
-func (c *S3Cache) GetOrLoad(ctx context.Context, problemData models.ProblemData) (string, error) {
+func (c *S3Cache) GetOrLoad(ctx context.Context, problemData models.ProblemData) (*cacheS3Item, error) {
 	c.mu.RLock()
 
 	key := strings.Join([]string{problemData.ProblemID, problemData.ProblemVersion}, "_")
@@ -190,10 +196,13 @@ func (c *S3Cache) GetOrLoad(ctx context.Context, problemData models.ProblemData)
 	log.Printf("Downloading problem %s version %s from S3 to %s", problemData.ProblemID, problemData.ProblemVersion, problemData.S3Hash)
 	err := c.S3Client.DownloadZip(ctx, problemData.S3Hash, localProblemCachePath)
 	if err != nil {
-		return "", fmt.Errorf("Failed to download problem zip from S3: %v", err)
+		return nil, fmt.Errorf("Failed to download problem zip from S3: %v", err)
 	}
 
-	c.store[key] = localProblemCachePath
+	c.store[key] = &cacheS3Item{
+		Path:      localProblemCachePath,
+		CompiledBin: nil,
+	}
 
-	return localProblemCachePath, nil
+	return c.store[key], nil
 }
